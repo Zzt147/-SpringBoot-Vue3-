@@ -27,7 +27,9 @@ export const useStore = defineStore(
 
     // 注销：清空用户信息
     function logout() {
+      // 清空 state
       user.user = null
+      // 由于开启了 persist，pinia 插件会自动把 localStorage 里的数据也同步清空
     }
 
     return { articleId, page, home, user, login, logout }
@@ -35,7 +37,7 @@ export const useStore = defineStore(
   {
     // [新增] 开启持久化配置
     // 需先安装并注册 pinia-plugin-persistedstate 插件
-    // 开启后，刷新浏览器页面，user 等状态会自动从 localStorage 恢复，不再丢失
+    // 开启后，刷新浏览器页面，user 等状态会自动从 localStorage 恢复
     persist: true,
   },
 )

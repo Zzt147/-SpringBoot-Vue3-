@@ -1,3 +1,42 @@
+import axios from 'axios'
+
+// --- 1. 定义 Axios 实例 ---
+const request = axios.create({
+  // 注意：这里假设你在 vite.config.js 里配置了 /api 代理转发到后端
+  // 如果没配置代理，可以直接写 'http://localhost:8080'
+  baseURL: '/api',
+  timeout: 5000,
+})
+
+// 请求拦截器（可以在这里自动带上 token）
+request.interceptors.request.use(
+  (config) => {
+    config.headers['Content-Type'] = 'application/json;charset=utf-8'
+    // 如果你有 token 逻辑，可以在这里加，例如：
+    // const user = JSON.parse(localStorage.getItem('user'))
+    // if (user && user.token) {
+    //   config.headers['token'] = user.token
+    // }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  },
+)
+
+// 响应拦截器
+request.interceptors.response.use(
+  (response) => {
+    // 可以在这里统一处理后端返回的错误码
+    return response
+  },
+  (error) => {
+    console.log('请求出错：' + error)
+    return Promise.reject(error)
+  },
+)
+
+// --- 2. 原有的工具函数 (保持不变) ---
 function undefine(i) {
   if ('undefined' == typeof i) {
     return true
@@ -20,14 +59,11 @@ function notNullZeroBlank(i) {
   return !nullZeroBlank(i)
 }
 
-// src/js/tool.js
-
 function dateFormat(dateString, format) {
   try {
     let date = new Date(dateString)
     if ('yyyy-MM-dd' == format) {
       let dateFormat = date.getFullYear() + '-'
-      // 修复：月份需要 +1
       dateFormat += date.getMonth() + 1 + '-'
       dateFormat += date.getDate()
       return dateFormat
@@ -38,11 +74,10 @@ function dateFormat(dateString, format) {
     return '格式转换错误！'
   }
 }
-// ... 保持其他代码不变
 
-export {
-  undefine, // 此处声明外部可调用的方法。未在此处声明的方法，外部无法调用。
-  nullZeroBlank,
-  notNullZeroBlank,
-  dateFormat,
-}
+// --- 3. 导出 ---
+// 【关键】默认导出 request，解决 "does not provide an export named default" 报错
+export default request
+
+// 同时也保留命名导出，不影响其他地方引用工具函数
+export { undefine, nullZeroBlank, notNullZeroBlank, dateFormat }

@@ -8,6 +8,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -61,6 +63,39 @@ public class UserController {
             result.setErrorMessage("修改失败");
             e.printStackTrace();
         }
+        return result;
+    }
+
+    /**
+     * 【新增】获取当前登录用户信息（用于前端初始化检查登录状态）
+     */
+    @GetMapping("/currentUser")
+    public Result currentUser() {
+        Result result = new Result();
+        try {
+            // 1. 从 Spring Security 上下文中获取当前认证信息
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+            // 2. 判断是否是已登录用户 (未登录时 principal 通常是字符串 "anonymousUser")
+            if (principal instanceof UserDetails) {
+                String username = ((UserDetails) principal).getUsername();
+                User user = userService.selectByUsername(username);
+
+                if (user != null) {
+                    user.setPassword(null); // 安全起见，抹除密码
+                    result.getMap().put("user", user);
+                    result.setSuccess(true);
+                    result.setMsg("已登录");
+                    return result;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 3. 如果没取到用户，返回失败
+        result.setSuccess(false);
+        result.setErrorMessage("未登录或会话已过期");
         return result;
     }
 }
