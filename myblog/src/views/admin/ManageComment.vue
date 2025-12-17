@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, inject, ref } from 'vue'
-import { ElMessageBox, ElMessage } from 'element-plus'
-import { Delete, Back, ChatLineSquare, Comment } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { Delete, Back, Document } from '@element-plus/icons-vue'
 
 const axios = inject('axios')
 
@@ -9,11 +9,40 @@ const axios = inject('axios')
 let myData = reactive({
   "comments": [],
   "pageParams": { "page": 1, "rows": 10, "total": 0 },
-  "isFilterMode": false, // 是否处于筛选模式（查看特定用户）
+  "isFilterMode": false, // 是否处于筛选模式
   "filterAuthor": ""     // 当前筛选的用户名
 })
 
-// 1. 获取管理员分页评论列表 (默认模式)
+// ==========================================
+// 【核心修复】数据标准化适配器
+// 仿照父页面的数据格式，修正子页面的字段名差异
+// ==========================================
+function fixData(commentList) {
+  if (!commentList || !Array.isArray(commentList)) {
+    return []
+  }
+
+  return commentList.map(item => {
+    // 1. 修正文章ID (如果后端返回了 article_id 但没返回 articleId)
+    if (!item.articleId && item.article_id) {
+      item.articleId = item.article_id
+    }
+
+    // 2. 修正文章标题 (如果后端返回了 title 但没返回 targetName)
+    if (!item.targetName && item.title) {
+      item.targetName = item.title
+    }
+
+    // 3. 修正文章标题 (有时候可能叫 articleTitle)
+    if (!item.targetName && item.articleTitle) {
+      item.targetName = item.articleTitle
+    }
+
+    return item
+  })
+}
+
+// 1. 获取管理员分页评论列表 (默认模式 - 父页面)
 function getAPage() {
   myData.isFilterMode = false
   myData.filterAuthor = ""
@@ -21,9 +50,9 @@ function getAPage() {
   axios.post('/api/comment/getAdminPage', myData.pageParams)
     .then((response) => {
       if (response.data.success) {
-        // 兼容后端返回结构，确保列表不为空
-        myData.comments = response.data.map.comments || []
-        // 更新分页总数
+        // 虽然父页面通常是正常的，但也加上 fixData 以防万一
+        myData.comments = fixData(response.data.map.comments || [])
+
         if (response.data.map.pageParams) {
           myData.pageParams.total = response.data.map.pageParams.total
         }
@@ -37,19 +66,19 @@ function getAPage() {
     })
 }
 
-// 2. 获取某用户的所有评论 (筛选模式)
+// 2. 获取某用户的所有评论 (筛选模式 - 发布人子页面)
 function getUserComments(author) {
   myData.isFilterMode = true
   myData.filterAuthor = author
 
-  // 注意：此处假设后端接口 /api/comment/getUserComments?author=xxx 返回该用户所有评论
   axios.post('/api/comment/getUserComments?author=' + author)
     .then(res => {
       if (res.data.success) {
-        myData.comments = res.data.map.comments || []
-        // 筛选模式下，前端暂时显示总条数，暂不支持后端分页（除非后端接口也支持分页）
+        // 【关键修复在这里】
+        // 使用 fixData 函数处理后端返回的数据，确保 articleId 和 targetName 存在
+        myData.comments = fixData(res.data.map.comments || [])
+
         myData.pageParams.total = myData.comments.length
-        // 筛选模式重置页码为1（如果做纯前端展示）
         myData.pageParams.page = 1
       } else {
         ElMessage.warning(res.data.msg)
@@ -61,38 +90,34 @@ function getUserComments(author) {
 // 初始化加载
 getAPage()
 
-// 分页改变处理 (仅在非筛选模式下有效)
+// 分页改变处理
 function handleSizeChange(newRows) {
-  if (myData.isFilterMode) return // 筛选模式暂不处理每页条数变化
+  if (myData.isFilterMode) return
   myData.pageParams.rows = newRows
   myData.pageParams.page = 1
   getAPage()
 }
 
 function handleCurrentChange(newPage) {
-  if (myData.isFilterMode) return // 筛选模式暂不处理翻页
+  if (myData.isFilterMode) return
   myData.pageParams.page = newPage
   getAPage()
 }
 
 // 删除逻辑
 const dialogVisible = ref(false)
-let deleteTarget = reactive({ id: 0, type: 'COMMENT' }) // 记录要删除的ID和类型
+let deleteTarget = reactive({ id: 0, type: 'COMMENT' })
 
 function showDeleteDialog(row) {
   deleteTarget.id = row.id
-  // 根据数据中的 type 字段判断是主评论还是子回复
-  // 假设后端 UserCommentVO 返回了 type: 'COMMENT' 或 'REPLY'
   deleteTarget.type = row.type || 'COMMENT'
   dialogVisible.value = true
 }
 
 function confirmDelete() {
-  // 根据类型调用不同的删除接口 (或者统一接口)
-  // 这里假设区分接口，如果你的后端统一了接口，可以简化
   let url = '/api/comment/deleteById?id=' + deleteTarget.id
   if (deleteTarget.type === 'REPLY') {
-    url = '/api/reply/deleteById?id=' + deleteTarget.id // 需确保后端有此接口
+    url = '/api/reply/deleteById?id=' + deleteTarget.id
   }
 
   axios.post(url)
@@ -100,7 +125,6 @@ function confirmDelete() {
       if (response.data.success) {
         ElMessage.success("删除成功")
         dialogVisible.value = false
-        // 刷新列表：如果在筛选模式，刷新筛选列表；否则刷新主列表
         if (myData.isFilterMode) {
           getUserComments(myData.filterAuthor)
         } else {
@@ -136,34 +160,40 @@ function confirmDelete() {
                 {{ scope.row.type === 'REPLY' ? '回复' : '评论' }}
               </el-tag>
 
-              <router-link :to="'/article_comment/' + (scope.row.refId || scope.row.articleId)" target="_blank"
-                class="content-link" :title="'点击查看文章: ' + (scope.row.targetName || '详情')">
+              <router-link v-if="scope.row.articleId"
+                :to="{ name: 'articleAndComment', params: { articleId: scope.row.articleId } }" class="content-link"
+                title="点击前往文章详情">
                 {{ scope.row.content }}
               </router-link>
+
+              <span v-else>{{ scope.row.content }}</span>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column label="发布人" width="130" align="center">
           <template #default="scope">
-            <span class="author-link" @click="getUserComments(scope.row.author)" title="点击查看该用户所有评论">
+            <span class="author-link" @click="getUserComments(scope.row.author)" title="点击筛选该用户">
               {{ scope.row.author }}
             </span>
           </template>
         </el-table-column>
 
-        <el-table-column label="所属对象" width="200" :show-overflow-tooltip="true">
+        <el-table-column label="所属文章" width="220" :show-overflow-tooltip="true">
           <template #default="scope">
-            <span style="color: #909399; font-size: 13px;">
-              <el-icon style="vertical-align: middle">
-                <ChatLineSquare />
+            <router-link v-if="scope.row.articleId"
+              :to="{ name: 'articleAndComment', params: { articleId: scope.row.articleId } }"
+              style="text-decoration: none; color: #606266; font-size: 13px; display: flex; align-items: center;">
+              <el-icon style="margin-right: 4px;">
+                <Document />
               </el-icon>
-              {{ scope.row.targetName || ('ID: ' + scope.row.refId) }}
-            </span>
+              {{ scope.row.targetName ? `《${scope.row.targetName}》` : ('文章ID: ' + scope.row.articleId) }}
+            </router-link>
+            <span v-else>无关联文章</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="created" label="发布时间" width="120" align="center" />
+        <el-table-column prop="created" label="发布时间" width="160" align="center" />
 
         <el-table-column label="操作" width="100" align="center">
           <template #default="scope">
@@ -202,7 +232,6 @@ function confirmDelete() {
 </template>
 
 <style scoped>
-/* 链接样式 */
 .content-link {
   text-decoration: none;
   color: #606266;
@@ -211,13 +240,13 @@ function confirmDelete() {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  /* 最多显示2行 */
   -webkit-box-orient: vertical;
 }
 
 .content-link:hover {
   color: #409EFF;
   text-decoration: underline;
+  cursor: pointer;
 }
 
 .author-link {

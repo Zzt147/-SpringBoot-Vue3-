@@ -39,7 +39,7 @@ onMounted(async () => {
 })
 // ------------------------------
 
-router.push({ name: 'home' })
+//router.push({ name: 'home' })
 
 const toHome = () => {
   router.push({ name: 'home' })

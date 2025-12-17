@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import ArticleAndComment from '@/views/admin/ArticleAndComment.vue' // 确保引入了这个组件
 
 // 路由规则单独提取，便于阅读
 const routes = [
@@ -25,6 +26,7 @@ const routes = [
     name: 'search',
     component: () => import('@/views/admin/Search.vue'),
   },
+
   // 文章详情页
   {
     path: '/article_comment/:articleId',

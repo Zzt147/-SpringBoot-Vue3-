@@ -2,6 +2,7 @@ package llp.spring.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import llp.spring.entity.Comment;
 // 20251217新增功能
+import llp.spring.entity.Reply;
 import llp.spring.mapper.CommentMapper;
 import llp.spring.tools.PageParams;
 import llp.spring.tools.Tools;
@@ -14,7 +15,8 @@ import llp.spring.tools.Result;
 import llp.spring.service.ICommentService;
 
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.*;
+import java.util.stream.Collectors;
 // 引入 HttpSession 和 UserDTO
 import javax.servlet.http.HttpSession;
 import llp.spring.entity.dto.UserDTO;
@@ -25,13 +27,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 // 20251217新增功能
 import llp.spring.entity.vo.UserCommentVO;
-import java.util.List;
 
 // 20251217新增功能 - 个人中心与浏览足迹
 import llp.spring.entity.User;
 import llp.spring.service.IOpLogService;
 import llp.spring.service.IUserService;
 
+import llp.spring.service.IReplyService;
+
+import llp.spring.entity.vo.UserCommentVO;
 @RestController
 @RequestMapping("/comment")
 public class CommentController {
@@ -41,8 +45,13 @@ public class CommentController {
     // 20251217新增功能 - 个人中心与浏览足迹
     @Autowired
     private IUserService userService;
+
     @Autowired
     private IOpLogService opLogService;
+    // 【2. 新增注入 ReplyService】
+    // 注意：你的 Service 接口名通常以 I 开头，如果是 ReplyService 请自行修改
+    @Autowired
+    private IReplyService replyService;
 
     @PostMapping("/getAPageCommentByArticleId")
     public Result getAPageCommentByArticleId(Integer articleId, @RequestBody PageParams pageParams){
@@ -91,12 +100,28 @@ public class CommentController {
     }
 
     // 评论管理功能
-    // --- 新增接口：获取所有评论（管理员） ---
+    // --- 修改：获取所有评论（管理员） ---
+    // --- 修改：获取所有评论（管理员） ---
+// --- 【修改后】管理员获取所有评论接口 ---
     @PostMapping("/getAdminPage")
     public Result getAdminPage(@RequestBody PageParams pageParams) {
         Result result = new Result();
         try {
-            result = commentService.getAdminPage(pageParams);
+            long page = pageParams.getPage();
+            long rows = pageParams.getRows();
+            long offset = (page - 1) * rows;
+
+            // 调用 Mapper 中新写的关联查询，确保 targetName (文章标题) 有值
+            List<UserCommentVO> list = commentMapper.getAdminComments((int) offset, (int) rows);
+
+            // 统计总数
+            Integer total = commentMapper.countAllCommentsAndReplies();
+
+            result.getMap().put("comments", list);
+            pageParams.setTotal(total);
+            result.getMap().put("pageParams", pageParams);
+
+            result.setSuccess(true);
         } catch (Exception e) {
             result.setErrorMessage("获取评论列表失败！");
             e.printStackTrace();
@@ -148,6 +173,68 @@ public class CommentController {
         } catch (Exception e) {
             e.printStackTrace();
             result.setErrorMessage("获取评论失败");
+        }
+        return result;
+    }
+
+    // 【3. 修复后的管理端接口】
+    @PostMapping("/getAllCommentsAndReplies")
+    public Result getAllCommentsAndReplies(@RequestBody PageParams pageParams) {
+        Result result = new Result();
+        try {
+            // 1. 查所有主评论
+            List<Comment> comments = commentService.list();
+            // 2. 查所有回复
+            List<Reply> replies = replyService.list();
+
+            // 为了给回复找到所属文章，我们需要先把所有评论转成 Map (id -> articleId)
+            // 这样不用在循环里查库，性能更好
+            Map<Integer, Integer> commentArticleMap = comments.stream()
+                    .collect(Collectors.toMap(Comment::getId, Comment::getArticleId));
+
+            // 3. 构造成统一的 VO 对象列表给前端
+            List<Map<String, Object>> unifiedList = new ArrayList<>();
+
+            // 处理主评论
+            for (Comment c : comments) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", c.getId());
+                map.put("content", c.getContent());
+                map.put("userId", c.getUserId()); // 【修复】使用 getUserId()
+                map.put("created", c.getCreated());
+                map.put("type", "评论");
+                map.put("articleId", c.getArticleId());
+                unifiedList.add(map);
+            }
+
+            // 处理回复
+            for (Reply r : replies) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", r.getId());
+                map.put("content", r.getContent());
+                map.put("userId", r.getUserId()); // 【修复】确保 Reply.java 有 @Data
+                map.put("created", r.getCreated());
+                map.put("type", "回复");
+
+                // 【修复 Bug 3】回复属于哪个评论？通过 commentId 找到对应的主评论，再拿到 articleId
+                Integer parentArticleId = commentArticleMap.get(r.getCommentId());
+                map.put("articleId", parentArticleId); // 这样管理页点击跳转就正常了
+
+                unifiedList.add(map);
+            }
+
+            // 简单按时间倒序排序（可选）
+            unifiedList.sort((o1, o2) -> {
+                String t1 = o1.get("created").toString();
+                String t2 = o2.get("created").toString();
+                return t2.compareTo(t1);
+            });
+
+            result.getMap().put("list", unifiedList);
+            result.setSuccess(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.setErrorMessage("获取失败");
         }
         return result;
     }

@@ -1,6 +1,7 @@
 package llp.spring.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author baomidou
@@ -36,6 +37,12 @@ public class Comment implements Serializable {
     private Integer id;
 
     /**
+     * 【新增】关联的用户id (关键修改)
+     */
+    @TableField("user_id")
+    private Integer userId;
+
+    /**
      * 关联的文章id
      */
     private Integer articleId;
@@ -43,9 +50,9 @@ public class Comment implements Serializable {
     /**
      * 评论时间
      */
-    // 20251217新增功能 - 修改DATE为DATETIME
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime created; // 改为 LocalDateTime
+    private LocalDateTime created;
+
     /**
      * 评论用户登录的ip地址
      */

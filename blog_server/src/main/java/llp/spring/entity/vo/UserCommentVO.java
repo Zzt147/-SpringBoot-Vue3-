@@ -14,6 +14,8 @@ public class UserCommentVO {
     private String content;
     private String author;
     private String type; // "COMMENT" 或 "REPLY"
+    // 【新增】专门用于管理后台，存储关联的文章ID
+    private Integer articleId;
     private Integer refId; // 如果是COMMENT存articleId，如果是REPLY存commentId
     private String targetName; // 文章标题 或 父评论内容(简略)
 

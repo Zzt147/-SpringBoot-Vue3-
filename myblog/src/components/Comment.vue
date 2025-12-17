@@ -2,10 +2,9 @@
 import { reactive, ref, inject, onMounted } from 'vue'
 import { useStore } from '@/stores/my'
 import { ElMessage } from 'element-plus'
+import { dateFormat } from '../js/tool' // 确保你的 tool.js 有这个方法
 
 // 接收父组件传递的参数
-// comment: 主评论对象
-// floor: 楼层号 (1L, 2L...)
 const props = defineProps(['comment', 'floor'])
 
 const store = useStore()
@@ -14,18 +13,20 @@ const axios = inject('axios')
 // --- 子评论(回复)相关数据 ---
 const replies = ref([])
 const replyPage = ref(1)
-const replyRows = ref(3) // 默认先显示3条回复
+const replyRows = ref(5) // 每页显示几条回复
 const replyTotal = ref(0)
+const showAllReplies = ref(false) // 是否展开所有回复
 
 // 回复输入框控制
-const showReplyInput = ref(false) // 是否显示输入框
+const showReplyInput = ref(false)
 const replyContent = ref('')
-const currentTargetUser = ref(null) // 记录当前回复的目标用户 (null表示回复层主)
+const replyPlaceholder = ref('回复层主...')
+const currentTargetUid = ref(null) // 记录要回复的目标用户ID (null代表回复层主)
 
 // 加载子评论
 function loadReplies() {
-  // 调用后端接口获取子评论 (commentId, page, rows)
-  axios.get(`/api/reply/getReplies?commentId=${props.comment.id}&page=${replyPage.value}&rows=${replyRows.value}`)
+  // 增加时间戳防止缓存
+  axios.get(`/api/reply/getReplies?commentId=${props.comment.id}&page=${replyPage.value}&rows=${replyRows.value}&_t=${new Date().getTime()}`)
     .then(res => {
       if (res.data.success) {
         replies.value = res.data.map.replies || []
@@ -35,296 +36,259 @@ function loadReplies() {
     .catch(err => console.error("加载回复失败", err))
 }
 
-// "展示更多" 按钮逻辑
-function loadMoreReplies() {
-  // 每次多加载 5 条
-  replyRows.value += 5
-  loadReplies()
+// 展开/折叠回复
+function toggleReplies() {
+  if (!showAllReplies.value) {
+    // 展开：加载更多
+    replyRows.value = 100 // 或者设置一个较大的数
+    loadReplies()
+  } else {
+    // 折叠：恢复默认
+    replyRows.value = 5
+    loadReplies()
+  }
+  showAllReplies.value = !showAllReplies.value
 }
 
-// 点击 "回复" 按钮
-// targetUser: 如果是回复子评论中的某人，则是那个人的名字；如果是回复层主，则为 null
-function triggerReply(targetUser = null) {
+// 点击“回复”按钮 (准备回复)
+// targetUser: 目标用户对象 (如果传null，表示回复层主)
+function prepareReply(targetUser) {
   // 1. 检查登录
   if (!store.user.user) {
-    ElMessage.warning('请先登录后发表回复')
+    ElMessage.warning("请先登录！")
     return
   }
 
-  // 2. 设置目标用户
-  currentTargetUser.value = targetUser
+  // 2. 设置目标
+  if (targetUser) {
+    currentTargetUid.value = targetUser.id  // 记录目标ID (后端需要这个字段)
+    replyPlaceholder.value = `回复 @${targetUser.username}:`
+  } else {
+    currentTargetUid.value = null // 回复层主（后端可能默认处理）
+    replyPlaceholder.value = `回复 @${props.comment.author}:`
+  }
 
-  // 3. 显示输入框 (不清空内容，防止用户误触关闭后重开内容丢失，如需清空可在提交成功后清空)
+  // 3. 显示输入框
   showReplyInput.value = true
+  replyContent.value = ""
 }
 
-// 提交回复
-function submitReply() {
+// 发送回复
+function sendReply() {
   if (!replyContent.value.trim()) {
-    ElMessage.warning('回复内容不能为空')
+    ElMessage.warning("请输入回复内容")
     return
   }
 
-  // 确定目标用户：如果有隐式目标就用它，否则默认是父评论的作者(层主)
-  const target = currentTargetUser.value || props.comment.author
+  let param = {
+    content: replyContent.value,
+    commentId: props.comment.id,
+    userId: store.user.user.id, // 发送者ID
+    toUid: currentTargetUid.value // 【关键修复】带上目标用户ID
+  }
 
-  axios.post('/api/reply/insert', {
-    content: replyContent.value,     // 纯内容
-    commentId: props.comment.id,     // 所属父评论ID
-    // 从 store 获取当前登录用户名
-    author: store.user.user.name || store.user.user.username,
-    targetAuthor: target             // 被回复的人
-  }).then(res => {
-    if (res.data.success) {
-      ElMessage.success('回复成功')
-
-      // 重置状态
-      replyContent.value = ''
-      showReplyInput.value = false
-      currentTargetUser.value = null
-
-      // 刷新列表：确保能看到刚发的回复
-      // 将显示数量设为当前数量+1，保证新回复不被折叠
-      replyRows.value = Math.max(replyRows.value, replies.value.length + 1)
-      loadReplies()
-    } else {
-      ElMessage.error(res.data.msg)
-    }
-  }).catch(() => ElMessage.error("回复失败"))
+  axios.post('/api/reply/insert', param)
+    .then(res => {
+      if (res.data.success) {
+        ElMessage.success("回复成功")
+        showReplyInput.value = false
+        replyContent.value = ""
+        // 重新加载回复列表
+        loadReplies()
+      } else {
+        ElMessage.error(res.data.msg || "回复失败")
+      }
+    })
+    .catch(() => ElMessage.error("系统繁忙"))
 }
 
-// 组件挂载时加载回复
+// 初始化加载
 onMounted(() => {
-  loadReplies()
+  if (props.comment.id) {
+    loadReplies()
+  }
 })
 </script>
 
 <template>
-  <div class="comment-wrapper">
-    <el-row class="main-comment-row">
-      <el-col :span="3" :sm="2" class="avatar-col">
-        <el-avatar shape="square" :size="40"
-          src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
-      </el-col>
-
-      <el-col :span="21" :sm="22">
-        <div class="comment-header">
-          <span class="user-name">{{ comment.author }}</span>
-          <span class="floor-badge">{{ floor }}L</span>
+  <div class="comment-item">
+    <div class="main-comment">
+      <div class="user-avatar">
+        <img :src="comment.avatar || '/api/images/default.png'" alt="avatar">
+      </div>
+      <div class="content-box">
+        <div class="user-info">
+          <span class="username">{{ comment.author }}</span>
+          <span class="floor-tag">#{{ floor }}楼</span>
         </div>
-
-        <div class="comment-body">
-          {{ comment.content }}
-        </div>
-
+        <div class="comment-text">{{ comment.content }}</div>
         <div class="comment-actions">
-          <span class="time-text">{{ comment.created }}</span>
-          <el-button type="primary" link size="small" @click="triggerReply(null)">
-            回复
-          </el-button>
+          <span class="time-text">{{ dateFormat(comment.created, 'yyyy-MM-dd') }}</span>
+          <span class="action-btn" @click="prepareReply(null)">回复</span>
         </div>
+      </div>
+    </div>
 
-        <div v-if="showReplyInput && !currentTargetUser" class="reply-input-area fade-in">
-          <div class="reply-status-bar">
-            正在回复 <el-tag size="small" type="info">层主</el-tag> :
-          </div>
-
-          <el-input v-model="replyContent" type="textarea" :rows="2" placeholder="写下你的回复..." />
-          <div style="text-align: right; margin-top: 5px;">
-            <el-button size="small" @click="showReplyInput = false">取消</el-button>
-            <el-button type="primary" size="small" @click="submitReply">发送</el-button>
-          </div>
-        </div>
-      </el-col>
-    </el-row>
-
-    <div v-if="replies.length > 0 || (showReplyInput && currentTargetUser)" class="sub-reply-container">
-
+    <div class="sub-reply-container" v-if="replies.length > 0 || showReplyInput">
       <div v-for="reply in replies" :key="reply.id" class="reply-item">
         <div class="reply-line">
-          <span class="reply-user">{{ reply.author }}</span>
+          <img class="mini-avatar" :src="reply.avatar || '/api/images/default.png'" />
 
-          <template v-if="reply.targetAuthor && reply.targetAuthor !== comment.author">
-            <span class="reply-text">回复</span>
-            <span class="reply-target">@{{ reply.targetAuthor }}</span>
-          </template>
+          <span class="reply-user">{{ reply.username }}</span>
 
-          <span class="reply-colon">：</span>
-          <span class="reply-content">{{ reply.content }}</span>
+          <span v-if="reply.targetName" style="color: #409EFF; margin: 0 4px; font-size: 12px;">
+            回复 @{{ reply.targetName }} :
+          </span>
+          <span v-else class="reply-colon"> : </span>
+
+          <span class="reply-text">{{ reply.content }}</span>
         </div>
 
         <div class="reply-actions">
-          <span class="time-text">{{ reply.created }}</span>
-          <el-button type="primary" link size="small" @click="triggerReply(reply.author)">
+          <span class="time-text">{{ dateFormat(reply.created, 'yyyy-MM-dd') }}</span>
+          <span class="action-btn" @click="prepareReply({ id: reply.userId, username: reply.username })">
             回复
-          </el-button>
+          </span>
         </div>
       </div>
 
-      <div v-if="replyTotal > replies.length" class="show-more-btn">
-        <span @click="loadMoreReplies">
-          还有 {{ replyTotal - replies.length }} 条回复，点击查看
-        </span>
+      <div v-if="replyTotal > 5" class="expand-btn" @click="toggleReplies">
+        {{ showAllReplies ? '收起回复' : `查看剩余 ${replyTotal - replies.length} 条回复` }}
       </div>
 
-      <div v-if="showReplyInput && currentTargetUser" class="reply-input-area fade-in">
-        <div class="reply-status-bar">
-          正在回复 <span style="color: #409EFF; font-weight: bold;">@{{ currentTargetUser }}</span>
-          <el-button link type="info" size="small" @click="triggerReply(null)"
-            style="margin-left: 10px;">(切换回回复层主)</el-button> :
-        </div>
-
-        <el-input v-model="replyContent" type="textarea" :rows="2" :placeholder="`回复 @${currentTargetUser}...`" />
-        <div style="text-align: right; margin-top: 5px;">
-          <el-button size="small" @click="showReplyInput = false; currentTargetUser = null">取消</el-button>
-          <el-button type="primary" size="small" @click="submitReply">发送</el-button>
+      <div v-if="showReplyInput" class="reply-input-box">
+        <el-input v-model="replyContent" :placeholder="replyPlaceholder" size="small" style="margin-bottom: 5px;" />
+        <div style="text-align: right;">
+          <el-button size="small" @click="showReplyInput = false">取消</el-button>
+          <el-button type="primary" size="small" @click="sendReply">发送</el-button>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 <style scoped>
-.comment-wrapper {
+.comment-item {
   padding: 15px 0;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.avatar-col {
-  text-align: center;
+.main-comment {
+  display: flex;
+  gap: 15px;
 }
 
-.comment-header {
+.user-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.content-box {
+  flex: 1;
+}
+
+.user-info {
+  margin-bottom: 5px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
 }
 
-.user-name {
-  font-weight: 600;
-  font-size: 14px;
+.username {
+  font-weight: bold;
   color: #333;
+  font-size: 14px;
 }
 
-.floor-badge {
+.floor-tag {
+  color: #999;
   font-size: 12px;
-  color: #909399;
-  background-color: #f4f4f5;
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 
-.comment-body {
+.comment-text {
   font-size: 14px;
   line-height: 1.6;
-  color: #303133;
+  color: #333;
   margin-bottom: 8px;
-  white-space: pre-wrap;
-  /* 保留换行符 */
   word-break: break-all;
 }
 
 .comment-actions {
   font-size: 12px;
-  color: #909399;
+  color: #999;
 }
 
-.time-text {
-  margin-right: 15px;
+.action-btn {
+  margin-left: 15px;
+  cursor: pointer;
+  color: #666;
 }
 
-/* 子评论容器样式 */
+.action-btn:hover {
+  color: #409EFF;
+}
+
+/* 子回复样式 */
 .sub-reply-container {
   margin-top: 10px;
-  margin-left: 50px;
-  /* 缩进效果 */
-  background-color: #fafafa;
-  padding: 15px;
+  margin-left: 55px;
+  /* 缩进 */
+  background-color: #f9f9f9;
+  padding: 10px;
   border-radius: 4px;
-  font-size: 13px;
 }
 
 .reply-item {
-  margin-bottom: 10px;
-  border-bottom: 1px dashed #ebeef5;
+  margin-bottom: 8px;
   padding-bottom: 8px;
+  border-bottom: 1px dashed #eee;
 }
 
-.reply-item:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
+.reply-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  margin-bottom: 4px;
 }
 
-.reply-user,
-.reply-target {
-  color: #409EFF;
-  cursor: pointer;
+.mini-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.reply-user {
   font-weight: 500;
+  color: #333;
 }
 
 .reply-text {
-  margin: 0 4px;
-  color: #909399;
-}
-
-.reply-colon {
-  margin-right: 4px;
-}
-
-.reply-content {
-  color: #606266;
-  word-break: break-all;
+  color: #555;
 }
 
 .reply-actions {
-  margin-top: 4px;
   font-size: 12px;
-  color: #909399;
+  color: #aaa;
+  padding-left: 30px;
+  /* 对齐文字 */
 }
 
-.show-more-btn {
-  margin-top: 10px;
-  text-align: left;
+.expand-btn {
+  font-size: 12px;
   color: #409EFF;
-  font-size: 12px;
   cursor: pointer;
+  margin-top: 5px;
 }
 
-.show-more-btn:hover {
-  text-decoration: underline;
-}
-
-/* 输入框区域样式 */
-.reply-input-area {
-  margin-top: 15px;
-  background: #fff;
+.reply-input-box {
+  margin-top: 10px;
   padding: 10px;
-  border: 1px solid #e4e7ed;
+  background: #fff;
+  border: 1px solid #ebeef5;
   border-radius: 4px;
-}
-
-.reply-status-bar {
-  font-size: 12px;
-  color: #606266;
-  margin-bottom: 8px;
-}
-
-/* 简单动画 */
-.fade-in {
-  animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 </style>
