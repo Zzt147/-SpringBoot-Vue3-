@@ -1,0 +1,42 @@
+package llp.spring.entity;
+
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.IdType;
+
+import java.io.Serializable;
+import java.util.Date;
+
+// 20251217新增功能 - 修改DATE为DATETIME
+import java.time.LocalDateTime; // 导入 LocalDateTime
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName("t_article")    // 对应的数据库表名
+public class Article implements Serializable {
+    @TableId(type = IdType.AUTO)   // id字段为自动增长
+    private Integer id;            // 文章id
+    private String title;          // 文章标题
+    private String content;        // 文章内容
+    private String categories;     // 文章分类
+    private String tags;           // 文章标签
+    private Boolean allowComment;  // 是否允许评论，默认为true
+    private String thumbnail;      // 文章缩略图
+
+
+    // 20251217新增功能 - 修改DATE为DATETIME
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 格式化精确到秒
+    private LocalDateTime created; // 改为 LocalDateTime
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private LocalDateTime modified; // 改为 LocalDateTime
+
+    // ...
+}
+
