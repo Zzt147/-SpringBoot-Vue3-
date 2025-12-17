@@ -1,4 +1,5 @@
 package llp.spring.controller;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import llp.spring.tools.ArticleSearch;
 import llp.spring.tools.PageParams;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,17 @@ import llp.spring.entity.User; // 引入你的 User 实体
 import llp.spring.service.IUserService; // 引入 UserService
 import llp.spring.service.IOpLogService;
 
+// 20251217新增功能 - 完善个人中心与浏览足迹
+import llp.spring.entity.Article;
+import llp.spring.entity.User;
+import llp.spring.service.IOpLogService;
+import llp.spring.service.IUserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.List;
+
 @RestController
 @RequestMapping("/article")  // 为控制器指定访问路径
 public class ArticleController {
@@ -32,6 +44,9 @@ public class ArticleController {
     @Autowired
     private IOpLogService opLogService;
 
+    // 20251217新增功能 - 完善个人中心与浏览足迹
+    @Autowired
+    private IUserService userService;
 
     // 方法1：主页打开时或从文章返回主页时调用
     @PostMapping("/getIndexData1")
@@ -89,30 +104,41 @@ public class ArticleController {
         return result;
     }
 
+    // 20251217新增功能 - 完善个人中心与浏览足迹
+    // 获取文章详情接口
     @PostMapping("/getArticleAndFirstPageCommentByArticleId")
-    public Result getArticleAndFirstPageCommentByArticleId(Integer articleId, @RequestBody PageParams pageParams ){
-        Result result=new Result();
-        try{
-            result=articleService.getArticleAndFirstPageCommentByArticleId(articleId, pageParams);
-        }catch (Exception e){
-            result.setErrorMessage("查询文章失败！");
-            e.printStackTrace();
-        }
+    public Result getArticleAndFirstPageCommentByArticleId(Integer articleId, @RequestBody PageParams pageParams) {
+        // 1. 原有逻辑：获取文章
+        Result result = articleService.getArticleAndFirstPageCommentByArticleId(articleId, pageParams);
 
-        // 20251217新增功能 - 个人中心与浏览足迹
-        // 2. 在 getArticleAndFirstPageCommentByArticleId 方法内部，return 之前：
-        // ... 获取 article 逻辑 ...
+        // 2. --- 新增：浏览埋点逻辑 ---
+        try {
+            // 尝试获取当前登录用户
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // --- 新增：记录浏览日志 ---
-        // 先获取当前登录用户 (如果已登录)
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            // 这里需要根据你的 UserService 获取用户ID，或者简单点，让前端传userId
-            // 假设这里能获取到 userId，或者你通过用户名查一下数据库
-            // 为了演示方便，这里先略过获取ID的复杂逻辑，假设你通过用户名查到了 user
-            // 你可以在 UserServiceImpl 里加一个 getByUsername 方法
+            // 只有登录用户才记录浏览足迹
+            if (principal instanceof UserDetails) {
+                String username = ((UserDetails) principal).getUsername();
+                User user = userService.selectByUsername(username);
+
+                if (user != null) {
+                    // 从 result 中尝试取出文章标题
+                    Object articleObj = result.getMap().get("article");
+                    String title = "未知文章";
+                    if (articleObj instanceof Article) {
+                        title = ((Article) articleObj).getTitle();
+                    }
+
+                    // 记录日志：用户ID, 类型BROWSE, 内容, 关联文章ID
+                    opLogService.record(user.getId(), "BROWSE", "浏览了文章: " + title, articleId);
+                }
+            }
+        } catch (Exception e) {
+            // 埋点报错不应影响文章正常展示，仅后台打印即可
+            System.err.println("浏览日志埋点失败: " + e.getMessage());
         }
-        // -----------------------
+        // ---------------------------
+
         return result;
     }
 
@@ -192,4 +218,29 @@ public class ArticleController {
         return result;
     }
 
+    // 在 ArticleController 中添加
+    @PostMapping("/getMyArticles")
+    public Result getMyArticles(Integer userId) {
+        Result result = new Result();
+        try {
+            // 使用 QueryWrapper 查询该用户的所有文章
+            QueryWrapper<Article> wrapper = new QueryWrapper<>();
+            // 注意：如果你的 article 表存的是 author(用户名) 而不是 userId，这里要对应修改
+            // 假设 article 表里还没有 user_id 字段，暂时用 author 查（不推荐但可行）
+            // 更好的做法是 t_article 表加 user_id。这里先演示用 author 查，你需要传入 author 名字
+            // 如果你的文章表关联的是 user_id，请用 .eq("user_id", userId)
+
+            // 假设我们之前用的是 author 存用户名
+            User user = userService.getById(userId);
+            if(user != null) {
+                wrapper.eq("author", user.getUsername()).orderByDesc("created");
+                List<Article> list = articleService.list(wrapper);
+                result.getMap().put("articles", list);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.setErrorMessage("获取文章失败");
+        }
+        return result;
+    }
 }

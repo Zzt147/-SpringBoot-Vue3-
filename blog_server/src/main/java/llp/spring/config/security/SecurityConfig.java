@@ -52,7 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
                 .hasRole("admin") // 管理员权限
                 // 20251217新增功能 - 个人中心与浏览足迹
                 // 修改为: 把 /oplog/** 也加进来，允许有角色的人访问
-                .antMatchers("/comment/insert", "/oplog/**", "/reply/**", "/comment/getUserComments")
+                .antMatchers("/comment/insert", "/oplog/**", "/reply/**", "/comment/getUserComments", "/user/updateInfo")
                 .hasAnyRole("common", "admin") // [建议] 改为 hasAnyRole，这样管理员也能发评论、看日志
 
                 .anyRequest().authenticated()

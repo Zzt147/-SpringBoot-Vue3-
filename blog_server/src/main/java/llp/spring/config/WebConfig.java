@@ -19,6 +19,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.upload-images-dir}")
     private String uploadImagesDir;
 
+    // 2. [新增] 注入新的头像上传路径
+    @Value("${file.upload-avatar-dir}")
+    private String uploadAvatarDir;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 2. 使用注入的变量替代硬编码
@@ -28,6 +32,11 @@ public class WebConfig implements WebMvcConfigurer {
         // 请确保 E:\img\article_img\ 目录下有你的图片（如 roadmap/1.jpg）
         registry.addResourceHandler("/article_img/**")
                 .addResourceLocations("file:" + "E:\\img\\article_img\\");
+
+        // 3. [修改] 头像上传映射，使用配置文件中的变量
+        // 访问 /api/file/images/** -> 去 D:\my_blog_upload\ 找
+        registry.addResourceHandler("/file/images/**")
+                .addResourceLocations("file:" + uploadAvatarDir);
     }
 
     @Override
@@ -36,7 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
         ObjectMapper objectMapper = converter.getObjectMapper();
         // 时间格式化
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd"));
+        objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
         // 设置格式化内容
         converter.setObjectMapper(objectMapper);
         converters.add(0, converter);

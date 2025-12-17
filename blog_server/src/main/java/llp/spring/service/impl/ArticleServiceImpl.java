@@ -41,9 +41,17 @@ import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.cache.annotation.Cacheable; // 导入注解
 
+// 导入必要的包
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import llp.spring.mapper.ArticleMapper;
+import llp.spring.entity.Article;
+import llp.spring.service.ArticleService;
+import org.springframework.stereotype.Service;
+// ... 其他原本的 import
+
 @Service // Spring注解，系统会自动创建该类的一个对象
 @Transactional
-public class ArticleServiceImpl implements ArticleService {
+public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements ArticleService  {
 
     // 1. 注入路径
     @Value("${file.upload-images-dir}")

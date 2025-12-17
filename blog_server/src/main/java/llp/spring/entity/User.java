@@ -40,4 +40,6 @@ public class User implements Serializable {
     private LocalDateTime created;
 
     private Boolean valid;
+
+    private String avatar;
 }

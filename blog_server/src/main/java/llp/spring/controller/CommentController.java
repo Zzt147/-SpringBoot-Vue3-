@@ -1,4 +1,5 @@
 package llp.spring.controller;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import llp.spring.entity.Comment;
 // 20251217新增功能
 import llp.spring.mapper.CommentMapper;
@@ -131,6 +132,22 @@ public class CommentController {
         } catch (Exception e) {
             result.setErrorMessage("查询失败");
             e.printStackTrace();
+        }
+        return result;
+    }
+
+    // 在 CommentController 中添加
+    @PostMapping("/getMyComments")
+    public Result getMyComments(String username) { // 直接传用户名查
+        Result result = new Result();
+        try {
+            QueryWrapper<Comment> wrapper = new QueryWrapper<>();
+            wrapper.eq("author", username).orderByDesc("created");
+            List<Comment> list = commentService.list(wrapper);
+            result.getMap().put("comments", list);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.setErrorMessage("获取评论失败");
         }
         return result;
     }
