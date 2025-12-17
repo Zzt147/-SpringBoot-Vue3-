@@ -23,6 +23,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.upload-avatar-dir}")
     private String uploadAvatarDir;
 
+    // 【新增】注入文章图片路径
+    @Value("${file.article-img-dir}")
+    private String articleImgDir;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 2. 使用注入的变量替代硬编码
@@ -31,7 +35,7 @@ public class WebConfig implements WebMvcConfigurer {
         // [新增] 配置 article_img 的映射
         // 请确保 E:\img\article_img\ 目录下有你的图片（如 roadmap/1.jpg）
         registry.addResourceHandler("/article_img/**")
-                .addResourceLocations("file:" + "E:\\img\\article_img\\");
+                .addResourceLocations("file:" + articleImgDir);
 
         // 3. [修改] 头像上传映射，使用配置文件中的变量
         // 访问 /api/file/images/** -> 去 D:\my_blog_upload\ 找

@@ -15,13 +15,23 @@ import java.util.Date;
 import java.time.LocalDateTime; // 导入 LocalDateTime
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("t_article")    // 对应的数据库表名
 public class Article implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     @TableId(type = IdType.AUTO)   // id字段为自动增长
     private Integer id;            // 文章id
+
+    // 【新增】对应数据库的 user_id 字段
+    @TableField("user_id")
+    private Integer userId;
+
     private String title;          // 文章标题
     private String content;        // 文章内容
     private String categories;     // 文章分类

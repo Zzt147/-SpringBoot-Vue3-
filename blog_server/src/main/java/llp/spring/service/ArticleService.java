@@ -13,11 +13,14 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface ArticleService extends IService<Article> {
 
     // 原有的自定义方法保持不变
-    public void publish(Article article);
+    // 【修改】将 void 改为 Article
+    Article publish(Article article);
+
+    // 【修改】将 void 改为 Article
+    Article update(Article article);
     public String upload(MultipartFile file);
     public Result getArticleAndFirstPageCommentByArticleId (Integer articleId, PageParams pageParams);
     public Result getAPageOfArticleVO( PageParams pageParams, String type);
-    public void update(Article article);
     public Article selectById(Integer id);
     public void deleteById(Integer id);
     public Result getIndexData();

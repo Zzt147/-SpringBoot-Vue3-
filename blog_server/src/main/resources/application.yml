@@ -28,3 +28,4 @@ file:
   upload-images-dir: E:\img\images\
   # [新增] 新的头像/文件上传保存路径 (注意最后带上斜杠)
   upload-avatar-dir: D:\my_blog_upload\
+  article-img-dir: E:\img\article_img\

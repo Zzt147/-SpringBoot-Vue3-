@@ -29,6 +29,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import java.util.List;
 
 @RestController
@@ -37,7 +41,6 @@ public class ArticleController {
 
     @Autowired  // 注入系统自动创建的Service对象，注意下面的对象名（首字母小写的类名）
     private ArticleService articleService;
-
 
     // 20251217新增功能 - 个人中心与浏览足迹
     // 1. 注入
@@ -105,12 +108,11 @@ public class ArticleController {
     }
 
     // 20251217新增功能 - 完善个人中心与浏览足迹
-    // 获取文章详情接口
     @PostMapping("/getArticleAndFirstPageCommentByArticleId")
-    public Result getArticleAndFirstPageCommentByArticleId(Integer articleId, @RequestBody PageParams pageParams) {
+    // 【修改】给 Integer articleId 加上 @RequestParam 注解
+    public Result getArticleAndFirstPageCommentByArticleId(@RequestParam Integer articleId, @RequestBody PageParams pageParams) {
         // 1. 原有逻辑：获取文章
         Result result = articleService.getArticleAndFirstPageCommentByArticleId(articleId, pageParams);
-
         // 2. --- 新增：浏览埋点逻辑 ---
         try {
             // 尝试获取当前登录用户
@@ -174,7 +176,7 @@ public class ArticleController {
     }
 
     @RequestMapping("/selectById")
-    public Result selectById(Integer id) {
+    public Result selectById(@RequestParam Integer id) {
         Result result = new Result();
         try {
             Article article = articleService.selectById(id);
@@ -218,25 +220,20 @@ public class ArticleController {
         return result;
     }
 
-    // 在 ArticleController 中添加
+    // 【修改】获取我的文章接口 - 现在直接用 ID 查，效率起飞！
     @PostMapping("/getMyArticles")
     public Result getMyArticles(Integer userId) {
         Result result = new Result();
         try {
-            // 使用 QueryWrapper 查询该用户的所有文章
+            // 直接使用 MyBatis Plus 的 QueryWrapper 查 user_id
             QueryWrapper<Article> wrapper = new QueryWrapper<>();
-            // 注意：如果你的 article 表存的是 author(用户名) 而不是 userId，这里要对应修改
-            // 假设 article 表里还没有 user_id 字段，暂时用 author 查（不推荐但可行）
-            // 更好的做法是 t_article 表加 user_id。这里先演示用 author 查，你需要传入 author 名字
-            // 如果你的文章表关联的是 user_id，请用 .eq("user_id", userId)
 
-            // 假设我们之前用的是 author 存用户名
-            User user = userService.getById(userId);
-            if(user != null) {
-                wrapper.eq("author", user.getUsername()).orderByDesc("created");
-                List<Article> list = articleService.list(wrapper);
-                result.getMap().put("articles", list);
-            }
+            // 以前是查 author，现在改成查 user_id
+            wrapper.eq("user_id", userId).orderByDesc("created");
+
+            List<Article> list = articleService.list(wrapper);
+            result.getMap().put("articles", list);
+            result.setSuccess(true); // 显式设置成功
         } catch (Exception e) {
             e.printStackTrace();
             result.setErrorMessage("获取文章失败");

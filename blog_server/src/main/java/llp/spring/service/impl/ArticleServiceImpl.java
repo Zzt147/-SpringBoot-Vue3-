@@ -206,8 +206,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return result;
     }
 
+    @Override
     @CachePut(cacheNames = "article", key = "#article.id")
-    public void update(Article article) {
+    public Article update(Article article) {
         Article newArticle = articleService.selectById(article.getId());
         // 20251217新增功能 - 修改DATE为DATETIME
         newArticle.setModified(LocalDateTime.now());
@@ -216,13 +217,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         newArticle.setTitle(article.getTitle());
         newArticle.setThumbnail(article.getThumbnail());
         // articleMapper使用从父类BaseMapper继承过来的updateById方法，更新表t_article中的文章
+
+        newArticle.setUserId(article.getUserId());
+
         articleMapper.updateById(newArticle);
+
+        return newArticle;
     }
 
     // 发布文章
+    @Override
     @CachePut(cacheNames = "article", key = "#article.id")
     @Transactional // 表示publish方法会被作为一个事务执行，确保文章和统计记录同时添加或均不添加
-    public void publish(Article article) {
+    public Article publish(Article article) {
         // 20251217新增功能 - 修改DATE为DATETIME
         article.setCreated(LocalDateTime.now());
         // articleMapper使用从父类BaseMapper继承过来的Insert方法，将文章添加到其t_article
@@ -234,6 +241,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         statistic.setHits(0);
         statistic.setCommentsNum(0);
         statisticMapper.insert(statistic);
+
+        return article;
     }
 
     @SneakyThrows // lombok注解，可以不写出异常的代码

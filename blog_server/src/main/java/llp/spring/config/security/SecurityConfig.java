@@ -40,7 +40,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
                 // 1. 自定义用户访问控制
-                .antMatchers("/images/**", "/article/articleSearch", "/article/getIndexData1",
+                .antMatchers("/images/**","/file/images/**", "/article/articleSearch",
+                        "/article/getIndexData1",
                         "/article/getAPageOfArticle", "/article/getIndexData",
                         "/article/getArticleAndFirstPageCommentByArticleId",
                         "/article/selectById", "/comment/getAPageCommentByArticleId",

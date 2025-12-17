@@ -25,23 +25,35 @@ public class UserController {
         return userService.checkUsername(username);
     }
 
+    // 替换原来的 updateInfo 方法
     @PostMapping("/updateInfo")
     public Result updateInfo(@RequestBody User user) {
         Result result = new Result();
         try {
-            // 获取当前登录用户，防止越权修改他人信息
+            // 1. 获取当前登录用户
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            String username = ((UserDetails) principal).getUsername();
-            User currentUser = userService.selectByUsername(username);
+            String currentUsername = ((UserDetails) principal).getUsername();
+            User currentUser = userService.selectByUsername(currentUsername);
 
             if (currentUser != null) {
-                // 只允许修改昵称和邮箱，不改密码
-                currentUser.setUsername(user.getUsername()); // 昵称
-                currentUser.setEmail(user.getEmail()); // 邮箱
-                // MybatisPlus 更新
+                // 2. 【修复】如果修改了用户名，必须检查新用户名是否已存在
+                if (user.getUsername() != null && !user.getUsername().equals(currentUser.getUsername())) {
+                    User checkUser = userService.selectByUsername(user.getUsername());
+                    if (checkUser != null) {
+                        result.setErrorMessage("该用户名已被占用，请更换！");
+                        return result;
+                    }
+                    currentUser.setUsername(user.getUsername());
+                }
+
+                // 3. 更新其他信息
+                if (user.getEmail() != null) {
+                    currentUser.setEmail(user.getEmail());
+                }
+
+                // 4. 执行更新
                 userService.updateById(currentUser);
 
-                // 更新成功后，返回最新的用户信息给前端更新 Store
                 result.getMap().put("user", currentUser);
                 result.setMsg("修改成功");
             }
