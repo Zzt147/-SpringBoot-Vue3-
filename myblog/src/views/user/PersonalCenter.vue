@@ -124,7 +124,16 @@ onMounted(() => {
                 <el-timeline v-if="activities.length > 0" style="padding-top: 10px;">
                   <el-timeline-item v-for="(act, i) in activities" :key="i" :timestamp="act.created.replace('T', ' ')"
                     placement="top" :color="act.type === 'COMMENT' ? '#409EFF' : '#909399'">
-                    {{ act.content }}
+
+                    <span v-if="act.targetId && (act.type === 'BROWSE' || act.type === 'COMMENT')"
+                      @click="$router.push('/article_comment/' + act.targetId)" style="cursor: pointer; color: #303133;"
+                      class="log-content">
+                      {{ act.content }}
+                    </span>
+                    <span v-else>
+                      {{ act.content }}
+                    </span>
+
                   </el-timeline-item>
                 </el-timeline>
                 <el-empty v-else description="暂无足迹" />
@@ -259,5 +268,11 @@ onMounted(() => {
   width: 100px;
   height: 100px;
   display: block;
+}
+
+/* 【新增】鼠标悬停效果 */
+.log-content:hover {
+  color: #409EFF !important;
+  text-decoration: underline;
 }
 </style>

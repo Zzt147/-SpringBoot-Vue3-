@@ -24,12 +24,18 @@ public interface ArticleMapper extends BaseMapper<Article> {
             @Param("offset")long offset,
             @Param("size")long size);
 
-    @Select("SELECT * FROM t_article ${ew.customSqlSegment}")
-    IPage<Article> getAPageOfArticle(IPage<Article> page, @Param("ew") QueryWrapper<ArticleVO> wrapper);
-
     @Select("SELECT a.id, a.title, a.created, a.categories, s.hits " +
             "FROM t_article a " +
             "LEFT JOIN t_statistic s ON a.id = s.article_id " +
             "${ew.customSqlSegment}")
     IPage<ArticleVO> articleSearch(IPage<ArticleVO> page, @Param("ew") QueryWrapper<ArticleVO> wrapper);
+
+    // 【修改】关联查询作者名
+    @Select("SELECT t_article.*, t_user.username AS authorName " +
+            "FROM t_article " +
+            "LEFT JOIN t_user ON t_article.user_id = t_user.id " +
+            "${ew.customSqlSegment}")
+    IPage<Article> getAPageOfArticle(IPage<Article> page, @Param("ew") QueryWrapper<ArticleVO> wrapper);
+
+    // ...
 }

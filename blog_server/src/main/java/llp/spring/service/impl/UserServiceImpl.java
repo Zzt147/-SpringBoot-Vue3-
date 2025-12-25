@@ -35,6 +35,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Autowired
     private UserMapper userMapper;
 
+
     @Override
     @Transactional
     public Result register(User user) {

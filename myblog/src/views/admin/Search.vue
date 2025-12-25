@@ -164,7 +164,7 @@ function clearSearch() {
         </el-table-column>
         <el-table-column label="发布时间" width="170">
           <template #default="scope">
-            {{ dateFormat(scope.row.created, 'yyyy-MM-dd') }}
+            {{ dateFormat(scope.row.created, 'yyyy-MM-dd HH:mm:ss') }}
           </template>
         </el-table-column>
         <el-table-column prop="hits" label="点击量" width="100" />

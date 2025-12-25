@@ -50,14 +50,21 @@ public interface CommentMapper extends BaseMapper<Comment> {
     @Select("SELECT (SELECT COUNT(*) FROM t_comment) + (SELECT COUNT(*) FROM t_reply)")
     Integer countAllCommentsAndReplies();
 
-    // 5. 个人中心逻辑 (保持不变)
-    @Select("SELECT id, content, author, created, 'COMMENT' as type, article_id as refId, " +
+    // 5. 个人中心/管理后台 - 根据作者查询 (修复后)
+    // 关键修复：添加 'article_id as articleId' 和 关联查询回复所属的文章ID
+    @Select("SELECT id, content, author, created, 'COMMENT' as type, " +
+            "article_id as articleId, " + // 【修复】添加 articleId
+            "article_id as refId, " +
             "(SELECT title FROM t_article WHERE id = t_comment.article_id) as targetName " +
             "FROM t_comment WHERE author = #{author} " +
             "UNION ALL " +
-            "SELECT id, content, author, created, 'REPLY' as type, comment_id as refId, " +
-            "(SELECT content FROM t_comment WHERE id = t_reply.comment_id) as targetName " +
-            "FROM t_reply WHERE author = #{author} " +
+            "SELECT r.id, r.content, r.author, r.created, 'REPLY' as type, " +
+            "c.article_id as articleId, " + // 【修复】通过父评论找到文章ID
+            "r.comment_id as refId, " +
+            "c.content as targetName " + // 回复的目标名称显示为父评论内容
+            "FROM t_reply r " +
+            "LEFT JOIN t_comment c ON r.comment_id = c.id " + // 【修复】关联父评论表
+            "WHERE r.author = #{author} " +
             "ORDER BY created DESC")
     List<UserCommentVO> selectCommentsByAuthor(@Param("author") String author);
 }

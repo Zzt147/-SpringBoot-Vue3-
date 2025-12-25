@@ -43,7 +43,7 @@ const formatDate = (dateInput) => {
     }
 
     // 使用 dateFormat 函数
-    const formatted = dateFormat(date, 'yyyy-MM-dd')
+    const formatted = dateFormat(date, 'yyyy-MM-dd HH:mm:ss')
     console.log('格式化结果:', formatted)
     return formatted
 
@@ -78,6 +78,14 @@ const formattedDate = computed(() => {
       <el-row align="middle">
         <el-space :size="size">
           <span id="categories" class="categories-height" v-html="props.article.categories"></span>
+
+          <span class="categories-height" v-if="props.article.authorName">
+            <el-icon style="vertical-align: middle; margin-right: 2px">
+              <User />
+            </el-icon>
+            {{ props.article.authorName }}
+          </span>
+
           <span class="categories-height">发布于 {{ formattedDate }}</span>
         </el-space>
       </el-row>

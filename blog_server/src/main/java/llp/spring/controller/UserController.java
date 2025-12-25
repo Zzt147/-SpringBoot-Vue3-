@@ -1,6 +1,8 @@
 package llp.spring.controller;
 
 import llp.spring.entity.User;
+import llp.spring.entity.dto.UserDTO;
+import llp.spring.mapper.UserMapper;
 import llp.spring.service.IUserService;
 import llp.spring.tools.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +12,17 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import org.springframework.util.StringUtils; // 建议引入
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @PostMapping("/register")
     public Result register(@RequestBody User user) {
@@ -38,7 +45,7 @@ public class UserController {
             User currentUser = userService.selectByUsername(currentUsername);
 
             if (currentUser != null) {
-                // 2. 【修复】如果修改了用户名，必须检查新用户名是否已存在
+                // 2. 检查用户名修改
                 if (user.getUsername() != null && !user.getUsername().equals(currentUser.getUsername())) {
                     User checkUser = userService.selectByUsername(user.getUsername());
                     if (checkUser != null) {
@@ -53,11 +60,25 @@ public class UserController {
                     currentUser.setEmail(user.getEmail());
                 }
 
+                // 【修复】添加头像更新逻辑
+                if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
+                    currentUser.setAvatar(user.getAvatar());
+                }
+
+                // 【建议】如果 UserDTO 有昵称 name 字段，这里也应该更新
+                // if (user.getName() != null) currentUser.setName(user.getName());
+
                 // 4. 执行更新
                 userService.updateById(currentUser);
 
-                result.getMap().put("user", currentUser);
+                // 重新封装 UserDTO 返回给前端更新 Store
+                UserDTO userDTO = UserDTO.entityToDto(currentUser);
+                // 补充权限信息(因为entity里没有)
+                userDTO.setAuthorities(userMapper.findAuthorityByName(currentUser.getUsername()));
+
+                result.getMap().put("user", userDTO); // 返回 DTO 更规范
                 result.setMsg("修改成功");
+                result.setSuccess(true);
             }
         } catch (Exception e) {
             result.setErrorMessage("修改失败");

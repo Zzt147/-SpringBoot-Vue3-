@@ -62,11 +62,24 @@ function notNullZeroBlank(i) {
 function dateFormat(dateString, format) {
   try {
     let date = new Date(dateString)
+    // 补零函数
+    const pad = (n) => (n < 10 ? '0' + n : n)
+
     if ('yyyy-MM-dd' == format) {
       let dateFormat = date.getFullYear() + '-'
       dateFormat += date.getMonth() + 1 + '-'
       dateFormat += date.getDate()
       return dateFormat
+    }
+    // 【新增】支持时分秒格式
+    else if ('yyyy-MM-dd HH:mm:ss' == format) {
+      let str = date.getFullYear() + '-'
+      str += pad(date.getMonth() + 1) + '-'
+      str += pad(date.getDate()) + ' '
+      str += pad(date.getHours()) + ':'
+      str += pad(date.getMinutes()) + ':'
+      str += pad(date.getSeconds())
+      return str
     } else {
       return '无此格式！'
     }

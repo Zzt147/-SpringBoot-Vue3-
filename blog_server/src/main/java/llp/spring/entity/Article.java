@@ -48,5 +48,13 @@ public class Article implements Serializable {
     private LocalDateTime modified; // 改为 LocalDateTime
 
     // ...
+
+    // ... inside Article class
+
+    // 【新增】作者名（数据库中不存在该字段，需关联查询）
+    @TableField(exist = false)
+    private String authorName;
+
+
 }
 

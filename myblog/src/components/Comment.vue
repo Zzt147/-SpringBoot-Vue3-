@@ -123,7 +123,7 @@ onMounted(() => {
         </div>
         <div class="comment-text">{{ comment.content }}</div>
         <div class="comment-actions">
-          <span class="time-text">{{ dateFormat(comment.created, 'yyyy-MM-dd') }}</span>
+          <span class="time-text">{{ dateFormat(comment.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
           <span class="action-btn" @click="prepareReply(null)">回复</span>
         </div>
       </div>
