@@ -24,6 +24,7 @@ public interface CommentMapper extends BaseMapper<Comment> {
             @Param("size") Integer size
     );
 
+    /***
     // 3. 【核心修复】管理员查询所有评论 + 回复
     // 修复重点：将查询结果别名改为 'articleId'，与前端 ManageComment.vue 需要的字段一致
     @Select("SELECT * FROM (" +
@@ -50,8 +51,10 @@ public interface CommentMapper extends BaseMapper<Comment> {
     @Select("SELECT (SELECT COUNT(*) FROM t_comment) + (SELECT COUNT(*) FROM t_reply)")
     Integer countAllCommentsAndReplies();
 
+    ***/
     // 5. 个人中心/管理后台 - 根据作者查询 (修复后)
     // 关键修复：添加 'article_id as articleId' 和 关联查询回复所属的文章ID
+
     @Select("SELECT id, content, author, created, 'COMMENT' as type, " +
             "article_id as articleId, " + // 【修复】添加 articleId
             "article_id as refId, " +
@@ -67,4 +70,42 @@ public interface CommentMapper extends BaseMapper<Comment> {
             "WHERE r.author = #{author} " +
             "ORDER BY created DESC")
     List<UserCommentVO> selectCommentsByAuthor(@Param("author") String author);
+
+    // 1. 【合并查询】支持按 author 筛选的动态 SQL
+    @Select("<script>" +
+            "SELECT * FROM (" +
+            // --- 查评论 ---
+            "  SELECT c.id, c.content, c.author, c.created, 'COMMENT' as type, " +
+            "  c.article_id as articleId, c.article_id as refId, " +
+            "  (SELECT title FROM t_article WHERE id = c.article_id) as targetName " +
+            "  FROM t_comment c " +
+            "  <where>" +
+            "    <if test='author != null and author != \"\"'> c.author = #{author} </if>" +
+            "  </where>" +
+            " UNION ALL " +
+            // --- 查回复 ---
+            "  SELECT r.id, r.content, r.author, r.created, 'REPLY' as type, " +
+            "  p.article_id as articleId, r.comment_id as refId, " +
+            "  (SELECT title FROM t_article WHERE id = p.article_id) as targetName " +
+            "  FROM t_reply r " +
+            "  LEFT JOIN t_comment p ON r.comment_id = p.id " +
+            "  <where>" +
+            "    <if test='author != null and author != \"\"'> r.author = #{author} </if>" +
+            "  </where>" +
+            ") as tmp " +
+            "ORDER BY created DESC " +
+            "LIMIT #{offset}, #{size}" +
+            "</script>")
+    List<UserCommentVO> getAdminComments(@Param("offset") int offset,
+                                         @Param("size") int size,
+                                         @Param("author") String author); // 【新增参数】
+
+
+    // 2. 【合并统计】统计总数也需要支持筛选，否则分页计算会错
+    @Select("<script>" +
+            "SELECT " +
+            "(SELECT COUNT(*) FROM t_comment <where><if test='author!=null and author!=\"\"'>author=#{author}</if></where>) + " +
+            "(SELECT COUNT(*) FROM t_reply <where><if test='author!=null and author!=\"\"'>author=#{author}</if></where>)" +
+            "</script>")
+    Integer countAdminComments(@Param("author") String author);
 }

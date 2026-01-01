@@ -110,13 +110,13 @@ public class CommentController {
             long page = pageParams.getPage();
             long rows = pageParams.getRows();
             long offset = (page - 1) * rows;
+            
+            // 【修改】获取前端传来的 author (如果没有则是 null)
+            String author = pageParams.getAuthor();
 
-            // 调用 Mapper 中新写的关联查询，确保 targetName (文章标题) 有值
-            List<UserCommentVO> list = commentMapper.getAdminComments((int) offset, (int) rows);
-
-            // 统计总数
-            Integer total = commentMapper.countAllCommentsAndReplies();
-
+            // 【修改】调用 Mapper 时传入 author
+            List<UserCommentVO> list = commentMapper.getAdminComments((int) offset, (int) rows, author);
+            Integer total = commentMapper.countAdminComments(author);
             result.getMap().put("comments", list);
             pageParams.setTotal(total);
             result.getMap().put("pageParams", pageParams);

@@ -8,9 +8,14 @@ const axios = inject('axios')
 // 数据状态
 let myData = reactive({
   "comments": [],
-  "pageParams": { "page": 1, "rows": 10, "total": 0 },
-  "isFilterMode": false, // 是否处于筛选模式
-  "filterAuthor": ""     // 当前筛选的用户名
+  "pageParams": {
+    "page": 1,
+    "rows": 10,
+    "total": 0,
+    "author": "" // 【新增】默认为空串
+  },
+  "isFilterMode": false,
+  "filterAuthor": ""
 })
 
 // ==========================================
@@ -28,31 +33,46 @@ function fixData(commentList) {
       item.articleId = item.article_id
     }
 
-    // 2. 修正文章标题 (如果后端返回了 title 但没返回 targetName)
-    if (!item.targetName && item.title) {
+    // ============================================================
+    // 【修复逻辑开始】解决点击发布人筛选后，"所属文章"显示错误的BUG
+    // ============================================================
+
+    // 问题分析：在"回复(Reply)"数据中，后端往往把 targetName 设为"被回复的父评论内容"。
+    // 解决方案：我们强制优先查找 articleTitle (文章标题) 并赋值给 targetName。
+
+    if (item.articleTitle) {
+      // 如果后端数据里有 articleTitle，直接用它覆盖 targetName
+      item.targetName = item.articleTitle
+    } else if (item.title) {
+      // 如果后端数据里有 title (通常也是指文章标题)，也覆盖 targetName
       item.targetName = item.title
     }
 
-    // 3. 修正文章标题 (有时候可能叫 articleTitle)
+    // 如果上面两个字段都没有，才保留原有的 targetName (兜底逻辑)
+    // (代码逻辑：如果 item.targetName 已存在且上面没覆盖，它就保持原样)
+
+    // 补充：为了防止某些极端情况 targetName 依然为空，尝试再次赋值
     if (!item.targetName && item.articleTitle) {
       item.targetName = item.articleTitle
     }
+
+    // ============================================================
+    // 【修复逻辑结束】
+    // ============================================================
 
     return item
   })
 }
 
 // 1. 获取管理员分页评论列表 (默认模式 - 父页面)
+// 统一获取列表接口 (支持分页 + 筛选)
 function getAPage() {
-  myData.isFilterMode = false
-  myData.filterAuthor = ""
-
+  // 这里的 myData.pageParams.author 如果有值，后端就会筛选；没值就是查全部
   axios.post('/api/comment/getAdminPage', myData.pageParams)
     .then((response) => {
       if (response.data.success) {
-        // 虽然父页面通常是正常的，但也加上 fixData 以防万一
+        // 这里依然建议保留 fixData 以防万一，但其实后端 SQL 已经修好了 targetName
         myData.comments = fixData(response.data.map.comments || [])
-
         if (response.data.map.pageParams) {
           myData.pageParams.total = response.data.map.pageParams.total
         }
@@ -61,31 +81,38 @@ function getAPage() {
         ElMessage.warning(response.data.msg || '获取数据失败')
       }
     })
-    .catch(() => {
-      ElMessage.error("系统错误！")
-    })
+    .catch(() => ElMessage.error("系统错误"))
 }
 
-// 2. 获取某用户的所有评论 (筛选模式 - 发布人子页面)
+// 点击用户名时的处理函数 (现在的逻辑变简单了)
 function getUserComments(author) {
   myData.isFilterMode = true
   myData.filterAuthor = author
 
-  axios.post('/api/comment/getUserComments?author=' + author)
-    .then(res => {
-      if (res.data.success) {
-        // 【关键修复在这里】
-        // 使用 fixData 函数处理后端返回的数据，确保 articleId 和 targetName 存在
-        myData.comments = fixData(res.data.map.comments || [])
-
-        myData.pageParams.total = myData.comments.length
-        myData.pageParams.page = 1
-      } else {
-        ElMessage.warning(res.data.msg)
-      }
-    })
-    .catch(() => ElMessage.error("获取用户评论失败"))
+  // 1. 设置筛选条件
+  myData.pageParams.author = author
+  // 2. 重置页码到第一页
+  myData.pageParams.page = 1
+  // 3. 调用统一接口
+  getAPage()
 }
+
+// 4. 返回全部列表 (重置筛选条件)
+function resetFilter() {
+  // 1. 清除筛选模式标记
+  myData.isFilterMode = false
+  myData.filterAuthor = ""
+
+  // 2. 关键：清空请求参数中的 author
+  myData.pageParams.author = ""
+
+  // 3. 重置回第一页
+  myData.pageParams.page = 1
+
+  // 4. 重新获取数据
+  getAPage()
+}
+
 
 // 初始化加载
 getAPage()
@@ -99,7 +126,7 @@ function handleSizeChange(newRows) {
 }
 
 function handleCurrentChange(newPage) {
-  if (myData.isFilterMode) return
+  //if (myData.isFilterMode) return
   myData.pageParams.page = newPage
   getAPage()
 }
@@ -142,7 +169,7 @@ function confirmDelete() {
   <el-row>
     <el-col :span="24">
       <h4 style="margin-left: 10px; display: flex; align-items: center; gap: 10px;">
-        <el-button v-if="myData.isFilterMode" :icon="Back" circle size="small" @click="getAPage" title="返回所有评论" />
+        <el-button v-if="myData.isFilterMode" :icon="Back" circle size="small" @click="resetFilter" title="返回所有评论" />
         <span>{{ myData.isFilterMode ? `用户 "${myData.filterAuthor}" 的所有评论` : '评论管理' }}</span>
       </h4>
     </el-col>
