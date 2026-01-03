@@ -76,6 +76,15 @@ const routes = [
         component: () => import('@/views/admin/ManageComment.vue'),
         meta: { title: '评论管理' },
       },
+      // 在 admin 的 children 数组中添加：
+      {
+        path: '/admin/manageCategory', // 访问路径
+        name: 'ManageCategory',
+        component: () => import('../views/admin/ManageCategory.vue'), // 对应刚才创建的文件
+        meta: {
+          requireAuth: true,
+        },
+      },
     ],
   },
 ]

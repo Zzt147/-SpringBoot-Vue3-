@@ -60,7 +60,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
                         "/api/article/selectById",
                         "/api/comment/getAPageCommentByArticleId",
                         "/api/user/register",
-                        "/api/user/checkUsername"
+                        "/api/user/checkUsername",
+                        "/api/category/**"
                 )
                 .permitAll() // 任意访问
                 .antMatchers(

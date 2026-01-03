@@ -30,11 +30,11 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 2. 使用注入的变量替代硬编码
-        registry.addResourceHandler("/images/**")
+        registry.addResourceHandler("/api/images/**")
                 .addResourceLocations("file:" + uploadImagesDir);
         // [新增] 配置 article_img 的映射
         // 请确保 E:\img\article_img\ 目录下有你的图片（如 roadmap/1.jpg）
-        registry.addResourceHandler("/article_img/**")
+        registry.addResourceHandler("/api/article_img/**")
                 .addResourceLocations("file:" + articleImgDir);
 
         // 3. [修改] 头像上传映射，使用配置文件中的变量

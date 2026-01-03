@@ -5,6 +5,7 @@ import { View, DArrowRight } from '@element-plus/icons-vue'
 import { provide } from 'vue' // 添加这行导入
 import { useStore } from '@/stores/my.js' // 2. 引入 store
 import { ElMessageBox } from 'element-plus' // 3. 引入消息提示框
+import { Rank } from '@element-plus/icons-vue'
 
 const aside_state = reactive({ collapse: false, width: '200px' })
 function toggleCollapse() {
@@ -91,7 +92,7 @@ function toExit() {
               </el-icon>
               <span>评论管理</span>
             </el-menu-item>
-            <el-menu-item>
+            <el-menu-item index="/admin/manageCategory">
               <el-icon>
                 <Filter />
               </el-icon>
