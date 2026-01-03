@@ -38,18 +38,33 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        http
+                .cors() // 【新增】开启 Spring Security 的跨域支持
+                .and()
+                .authorizeRequests();
         http.authorizeRequests()
                 // 1. 自定义用户访问控制
-                .antMatchers("/images/**","/file/images/**", "/article/articleSearch",
-                        "/article/getIndexData1",
-                        "/article/getAPageOfArticle", "/article/getIndexData",
-                        "/article/getArticleAndFirstPageCommentByArticleId",
-                        "/article/selectById", "/comment/getAPageCommentByArticleId",
-                        "/user/register",        // 注册接口
-                        "/user/checkUsername")
+                .antMatchers(
+                        "/images/**",
+                        "/file/images/**",
+                        // 【修改】下面这些都要加上 /api
+                        "/api/article/articleSearch",
+                        "/api/article/getIndexData1",
+                        "/api/article/getAPageOfArticle",
+                        "/api/article/getIndexData",
+                        "/api/article/getArticleAndFirstPageCommentByArticleId",
+                        "/api/article/selectById",
+                        "/api/comment/getAPageCommentByArticleId",
+                        "/api/user/register",
+                        "/api/user/checkUsername"
+                )
                 .permitAll() // 任意访问
-                .antMatchers("/article/deleteById", "/article/getAPageOfArticleVO",
-                        "/article/upload", "/article/publishArticle")
+                .antMatchers(
+                        "/api/article/deleteById",
+                        "/api/article/getAPageOfArticleVO",
+                        "/api/article/upload",
+                        "/api/article/publishArticle"
+                )
                 .hasRole("admin") // 管理员权限
                 // 20251217新增功能 - 个人中心与浏览足迹
                 // 修改为: 把 /oplog/** 也加进来，允许有角色的人访问
@@ -60,12 +75,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
                 .and()
                 // 2. 自定义用户登录控制
                 .formLogin()
+                .loginProcessingUrl("/api/login") // 【新增】指定处理登录请求的URL为 /api/login
                 .failureHandler(myAuthenticationFailureHandler) // 权限验证失败的处理
                 .successHandler(myAuthenticationSuccessHandler) // 权限验证成功的处理
                 .permitAll() // 登录页面所有人可以访问
                 .and()
                 .logout() // 注销用户
-                .logoutUrl("/logout") // 注销网址
+                .logoutUrl("/api/logout") // 注销网址
                 .logoutSuccessHandler(new LogoutSuccessHandler() {
                     @Override
                     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response,

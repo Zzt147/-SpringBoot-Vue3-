@@ -4,6 +4,7 @@ package llp.spring.controller;
 
 import llp.spring.entity.Reply;
 import llp.spring.mapper.ReplyMapper;
+import llp.spring.tools.IpUtils;
 import llp.spring.tools.Result;
 import llp.spring.tools.Tools;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,10 @@ import java.util.List;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
-@RequestMapping("/reply")
+@RequestMapping("/api/reply")
 public class ReplyController {
 
     @Autowired
@@ -26,7 +29,7 @@ public class ReplyController {
 
     // 添加回复
     @PostMapping("/insert")
-    public Result insert(@RequestBody Reply reply) {
+    public Result insert(@RequestBody Reply reply, HttpServletRequest request) {
         Result result = new Result();
         try {
             // 20251216新增功能 - 修改用户名为真实用户名
@@ -40,6 +43,13 @@ public class ReplyController {
             reply.setAuthor(username);
 
             reply.setCreated(LocalDateTime.now());
+
+            // 【新增代码开始】 ===
+            String ip = IpUtils.getIpAddr(request);
+            reply.setIp(ip);
+            reply.setLocation(IpUtils.getCityInfo(ip)); // 设置属地
+            // 【新增代码结束】 ===
+
             replyMapper.insert(reply);
             result.getMap().put("reply", reply);
             result.setMsg("回复成功!");

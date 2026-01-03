@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @RestController
 // 注意：前端上传接口写的是 /api/file/upload，经过代理后，这里映射 /file 即可
-@RequestMapping("/file")
+@RequestMapping("/api/file")
 public class FileController {
 
     @Value("${file.upload-avatar-dir}")

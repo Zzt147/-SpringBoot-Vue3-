@@ -72,4 +72,9 @@ public class Comment implements Serializable {
      * 评论用户用户名
      */
     private String author;
+
+    /**
+     * IP属地
+     */
+    private String location; // 【新增】
 }

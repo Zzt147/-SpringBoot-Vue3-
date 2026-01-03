@@ -5,6 +5,9 @@ import { useRouter } from 'vue-router'
 import { useStore } from '@/stores/my.js'
 import qs from 'qs'
 
+// 【新增】导入背景图片
+import backImg from '@/assets/back.jpg'
+
 const router = useRouter()
 const store = useStore()
 const axios = inject('axios')
@@ -87,7 +90,7 @@ const goToRegister = () => {
 </script>
 
 <template>
-  <div class="log">
+  <div class="log" :style="{ backgroundImage: `url(${backImg})` }">
     <el-row justify="center">
       <el-col :span="10">
         <h1 class="log-title">欢迎登录博客</h1>
@@ -129,8 +132,12 @@ const goToRegister = () => {
 .log {
   width: 100%;
   height: 100%;
-  background: url('/src/assets/back.jpg') black no-repeat;
-  background-size: 100% 100%;
+  /* background: url('/src/assets/back.jpg') black no-repeat;  <-- 删除这行 */
+  /* background-size: 100% 100%;  <-- 删除这行 */
+  background-size: cover;
+  /* 建议改成 cover */
+  background-position: center;
+  background-repeat: no-repeat;
   height: 624px;
 }
 </style>

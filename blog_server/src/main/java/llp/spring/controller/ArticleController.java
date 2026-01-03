@@ -36,7 +36,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.List;
 
 @RestController
-@RequestMapping("/article")  // 为控制器指定访问路径
+@RequestMapping("/api/article")  // 为控制器指定访问路径
 public class ArticleController {
 
     @Autowired  // 注入系统自动创建的Service对象，注意下面的对象名（首字母小写的类名）

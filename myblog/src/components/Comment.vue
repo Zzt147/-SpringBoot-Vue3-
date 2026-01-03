@@ -124,6 +124,9 @@ onMounted(() => {
         <div class="comment-text">{{ comment.content }}</div>
         <div class="comment-actions">
           <span class="time-text">{{ dateFormat(comment.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
+          <span class="location-text" v-if="comment.location" style="margin-left: 10px; color: #999; font-size: 12px;">
+            IP属地：{{ comment.location }}
+          </span>
           <span class="action-btn" @click="prepareReply(null)">回复</span>
         </div>
       </div>
@@ -145,7 +148,10 @@ onMounted(() => {
         </div>
 
         <div class="reply-actions">
-          <span class="time-text">{{ dateFormat(reply.created, 'yyyy-MM-dd') }}</span>
+          <span class="time-text">{{ dateFormat(reply.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
+          <span class="location-text" v-if="comment.location" style="margin-left: 10px; color: #999; font-size: 12px;">
+            IP属地：{{ comment.location }}
+          </span>
           <span class="action-btn" @click="prepareReply({ id: reply.userId, username: reply.username })">
             回复
           </span>

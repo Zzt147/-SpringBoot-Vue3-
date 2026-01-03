@@ -108,4 +108,6 @@ public interface CommentMapper extends BaseMapper<Comment> {
             "(SELECT COUNT(*) FROM t_reply <where><if test='author!=null and author!=\"\"'>author=#{author}</if></where>)" +
             "</script>")
     Integer countAdminComments(@Param("author") String author);
+
+
 }

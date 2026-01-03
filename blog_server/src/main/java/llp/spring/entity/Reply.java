@@ -55,4 +55,14 @@ public class Reply implements Serializable {
     @TableField("user_id")
     private Integer userId;
 
+    // 在类中添加这两个字段
+    /**
+     * 回复人IP
+     */
+    private String ip; // 【新增】
+
+    /**
+     * IP属地
+     */
+    private String location; // 【新增】
 }

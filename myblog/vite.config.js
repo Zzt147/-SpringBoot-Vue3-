@@ -1,5 +1,4 @@
 import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
@@ -13,16 +12,18 @@ export default defineConfig({
     },
   },
   server: {
-    //服务器
+    host: '0.0.0.0',
+    port: 5173,
+
+    // 【关键修改】这里要写 true (不带引号)，表示“允许一切”
+    allowedHosts: true,
+
     proxy: {
-      //反向代理
       '/api': {
-        //要跨域的域名 目标地址：后端服务器网址
         target: 'http://localhost:8080',
-        changeOrigin: true, //是否开启跨域，是否更改源路径
-        ws: true, //代理websocked
-        //将请求网址中的api替换为空''
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        changeOrigin: true,
+        ws: true,
+        //rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },

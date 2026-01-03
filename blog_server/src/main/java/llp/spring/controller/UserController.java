@@ -15,7 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import org.springframework.util.StringUtils; // 建议引入
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 public class UserController {
 
     @Autowired

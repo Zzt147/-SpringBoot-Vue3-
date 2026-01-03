@@ -4,6 +4,7 @@ import llp.spring.entity.Comment;
 // 20251217新增功能
 import llp.spring.entity.Reply;
 import llp.spring.mapper.CommentMapper;
+import llp.spring.tools.IpUtils;
 import llp.spring.tools.PageParams;
 import llp.spring.tools.Tools;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 // 引入 HttpSession 和 UserDTO
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import llp.spring.entity.dto.UserDTO;
 
@@ -37,7 +39,7 @@ import llp.spring.service.IReplyService;
 
 import llp.spring.entity.vo.UserCommentVO;
 @RestController
-@RequestMapping("/comment")
+@RequestMapping("/api/comment")
 public class CommentController {
     @Autowired
     private ICommentService commentService;
@@ -66,7 +68,7 @@ public class CommentController {
     }
 
     @PostMapping("/insert")
-    public Result insert(@RequestBody Comment comment){
+    public Result insert(@RequestBody Comment comment, HttpServletRequest request){
         Result result = new Result();
         try {
             // 20251216新增功能 - 修改用户名为真实用户名
@@ -80,6 +82,13 @@ public class CommentController {
             comment.setAuthor(username);
 
             comment.setCreated(LocalDateTime.now()); // 之前修改的时间
+
+            // 【新增代码开始】 ===
+            String ip = IpUtils.getIpAddr(request);
+            comment.setIp(ip);
+            comment.setLocation(IpUtils.getCityInfo(ip));
+            // 【新增代码结束】 ===
+
             Comment comment1 = commentService.insert(comment);
 
             // 20251217新增功能 - 个人中心与浏览足迹
@@ -110,7 +119,7 @@ public class CommentController {
             long page = pageParams.getPage();
             long rows = pageParams.getRows();
             long offset = (page - 1) * rows;
-            
+
             // 【修改】获取前端传来的 author (如果没有则是 null)
             String author = pageParams.getAuthor();
 
@@ -238,4 +247,6 @@ public class CommentController {
         }
         return result;
     }
+
+
 }
