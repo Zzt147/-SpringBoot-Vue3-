@@ -45,6 +45,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
         http.authorizeRequests()
                 // 1. 自定义用户访问控制
                 .antMatchers(
+                        "/",                  // 【新增】允许访问根路径
+                        "/index.html",        // 【新增】允许访问首页文件
+                        "/assets/**",         // 【新增】允许访问 Vue 打包后的静态资源 (js, css)
+                        "/favicon.ico",       // 【新增】允许访问图标
                         "/images/**",
                         "/file/images/**",
                         // 【修改】下面这些都要加上 /api
@@ -61,14 +65,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
                 .permitAll() // 任意访问
                 .antMatchers(
                         "/api/article/deleteById",
-                        "/api/article/getAPageOfArticleVO",
-                        "/api/article/upload",
-                        "/api/article/publishArticle"
+                        "/api/article/getAPageOfArticleVO"
                 )
                 .hasRole("admin") // 管理员权限
                 // 20251217新增功能 - 个人中心与浏览足迹
                 // 修改为: 把 /oplog/** 也加进来，允许有角色的人访问
-                .antMatchers("/comment/insert", "/oplog/**", "/reply/**", "/comment/getUserComments", "/user/updateInfo")
+                .antMatchers("/comment/insert",
+                        "/oplog/**",
+                        "/reply/**",
+                        "/comment/getUserComments",
+                        "/user/updateInfo",
+                        "/api/article/upload",
+                        "/api/article/publishArticle")
+
                 .hasAnyRole("common", "admin") // [建议] 改为 hasAnyRole，这样管理员也能发评论、看日志
 
                 .anyRequest().authenticated()

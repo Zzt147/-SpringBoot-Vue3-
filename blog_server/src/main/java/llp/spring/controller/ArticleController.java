@@ -144,24 +144,46 @@ public class ArticleController {
         return result;
     }
 
-    // 此时它的完整访问路径是：/article/publishArticle
-    @RequestMapping("/publishArticle") // 添加和修改文章功能整合在一块，用type来区分
+// ... 其他引用保持不变
+
+    @RequestMapping("/publishArticle")
     public String publishArticle(String type, @RequestBody Article article) {
         try {
+            // === 【新增核心代码 START】 ===
+            // 1. 获取当前登录的安全主体
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+            // 2. 判断是否已登录
+            if (principal instanceof UserDetails) {
+                String username = ((UserDetails) principal).getUsername();
+                // 3. 查询数据库获取完整的用户信息（主要是为了拿 ID）
+                User user = userService.selectByUsername(username);
+
+                if (user != null) {
+                    // 4. 强制设置文章作者为当前登录用户
+                    article.setUserId(user.getId());      // 设置作者ID (数据库字段: user_id)
+                    article.setAuthorName(user.getUsername()); // 设置作者名 (数据库字段: author)
+                }
+            }
+            // === 【新增核心代码 END】 ===
+
             if(article.getThumbnail() == null || !article.getThumbnail().startsWith("/api")) {
                 article.setThumbnail("/api/images/6.png"); // 设置默认缩略图
             }
-            if ("add".equals(type))
+
+            if ("add".equals(type)) {
                 articleService.publish(article);
-            else if ("edit".equals(type))
+            } else if ("edit".equals(type)) {
+                // 如果是编辑，这里会将最后修改人设置为当前登录用户
+                // 如果需要限制“只能编辑自己的文章”，需要额外加判断逻辑
                 articleService.update(article);
-            return "添加成功！";
+            }
+            return "操作成功！";
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "添加失败！";
+        return "操作失败！";
     }
-
     @PostMapping("/upload")
     public Result upload(MultipartFile file) {
         Result result = new Result();
