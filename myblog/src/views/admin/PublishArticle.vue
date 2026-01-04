@@ -5,17 +5,29 @@ import { ElMessageBox } from 'element-plus'
 import { useStore } from '@/stores/my'
 import Cropper from "@/components/Cropper.vue";
 import { undefine, nullZeroBlank } from "@/js/tool.js"
+import { useRoute } from 'vue-router' // 1. 【关键】引入 useRoute
 
 const store = useStore()
-let type = "add"
-const header = ref("发布文章")
+const route = useRoute() // 2. 【关键】定义 route 变量
 const axios = inject('axios')
 
-// === 新增：分类树数据 ===
-const categoryOptions = ref([])
-const selectedCategory = ref([]) // 绑定的级联选择数组 ['技术', '后端', 'Java']
+let type = "add"
+const header = ref("发布文章")
 
-// 图片上传处理
+// === 分类相关数据 ===
+const categoryOptions = ref([])
+const selectedCategory = ref([]) // 级联选择器绑定的数组
+
+// 加载分类树
+function loadCategoryTree() {
+  axios.get('/api/category/getTree').then(res => {
+    if (res.data.success) {
+      categoryOptions.value = res.data.map.data
+    }
+  })
+}
+
+// 图片上传逻辑
 const image_upload_handler = (blobInfo, progress) => new Promise((resolve, reject) => {
   const xhr = new XMLHttpRequest();
   xhr.withCredentials = false;
@@ -45,59 +57,12 @@ const init = reactive({
   convert_urls: false
 })
 
-// === 修改：初始化文章对象，增加 categories ===
+// 文章对象
 let article = reactive({ "title": "", "tags": "", "content": "", "categories": "", "thumbnail": "" })
-
-// === 新增：加载分类树 ===
-function loadCategoryTree() {
-  axios.get('/api/category/getTree').then(res => {
-    if (res.data.success) {
-      categoryOptions.value = res.data.map.data // 注意：后端返回的数据在 map.data 中
-    }
-  })
-}
-
-// 初始化加载
-onMounted(() => {
-  loadCategoryTree()
-
-  if (store.articleId > 0) {
-    type = "edit"
-    header.value = "编辑文章"
-    axios({
-      method: 'post',
-      url: '/api/article/selectById?id=' + store.articleId
-    }).then((response) => {
-      if (response.data.success) {
-        let nowArticle = response.data.map.article
-        article.id = nowArticle.id
-        article.title = nowArticle.title
-        article.tags = nowArticle.tags
-        article.content = nowArticle.content
-        article.thumbnail = nowArticle.thumbnail
-
-        // 回显分类：将存储的字符串 "技术/后端/Java" 转回数组
-        if (nowArticle.categories) {
-          article.categories = nowArticle.categories
-          selectedCategory.value = nowArticle.categories.split('/')
-        }
-
-        if (!undefine(article.thumbnail) && !nullZeroBlank(article.thumbnail) && article.thumbnail.indexOf("/api") == 0) {
-          cropper1.value.setThumbnail(article.thumbnail)
-        }
-      } else {
-        ElMessageBox.alert(response.data.msg, '结果')
-      }
-      store.articleId = 0
-    }).catch((error) => {
-      ElMessageBox.alert("系统错误！", '结果')
-      store.articleId = 0
-    })
-  }
-})
 
 const cropper1 = ref(null)
 
+// 发布文章
 function publishArticle() {
   let thumbnail = cropper1.value.getThumbnail()
   if (undefine(thumbnail) || nullZeroBlank(thumbnail) || thumbnail.indexOf("/api") != 0) {
@@ -106,22 +71,17 @@ function publishArticle() {
     article.thumbnail = thumbnail
   }
 
-  // === 新增：处理分类 ===
-  // 将级联选择的数组 ['技术', '后端', 'Java'] 拼接成字符串 "技术/后端/Java" 存入数据库
+  // === 处理分类 ===
   if (selectedCategory.value && selectedCategory.value.length > 0) {
     article.categories = selectedCategory.value.join('/')
   } else {
     article.categories = "默认分类"
   }
 
-  // === 新增：处理标签格式 ===
-  // 自动将用户输入的 "Java SpringBoot" 转换为 "#Java #SpringBoot"
+  // === 处理标签格式 (#Java #Spring) ===
   if (article.tags) {
-    // 1. 替换中文逗号、英文逗号为为空格
     let tempTags = article.tags.replace(/，/g, ' ').replace(/,/g, ' ').trim()
-    // 2. 按空格分割
     let tagList = tempTags.split(/\s+/)
-    // 3. 确保每个标签以 # 开头
     article.tags = tagList.map(tag => tag.startsWith('#') ? tag : '#' + tag).join(' ')
   }
 
@@ -154,11 +114,60 @@ function clearData() {
   article.title = ""
   article.tags = ""
   article.content = ""
-  article.categories = "" // 清空分类
-  selectedCategory.value = [] // 清空选择器
+  article.categories = ""
+  selectedCategory.value = []
   article.thumbnail = ""
   cropper1.value.clearData()
 }
+
+// === 初始化逻辑 ===
+onMounted(() => {
+  loadCategoryTree() // 加载分类树
+
+  // 3. 【关键】自动接收 URL 中的分类参数
+  if (route.query.categoryPath) {
+    const pathStr = route.query.categoryPath
+    // 设置给级联选择器 (数组格式 ['技术','后端'])
+    selectedCategory.value = pathStr.split('/')
+    // 设置给文章对象
+    article.categories = pathStr
+  }
+
+  // 编辑模式回显
+  if (store.articleId > 0) {
+    type = "edit"
+    header.value = "编辑文章"
+    axios({
+      method: 'post',
+      url: '/api/article/selectById?id=' + store.articleId
+    }).then((response) => {
+      if (response.data.success) {
+        let nowArticle = response.data.map.article
+        article.id = nowArticle.id
+        article.title = nowArticle.title
+        article.tags = nowArticle.tags
+        article.content = nowArticle.content
+        article.thumbnail = nowArticle.thumbnail
+
+        // 回显分类
+        if (nowArticle.categories) {
+          article.categories = nowArticle.categories
+          selectedCategory.value = nowArticle.categories.split('/')
+        }
+
+        if (!undefine(article.thumbnail) && !nullZeroBlank(article.thumbnail) && article.thumbnail.indexOf("/api") == 0) {
+          cropper1.value.setThumbnail(article.thumbnail)
+        }
+      } else {
+        ElMessageBox.alert(response.data.msg, '结果')
+      }
+      store.articleId = 0
+    }).catch((error) => {
+      ElMessageBox.alert("系统错误！", '结果')
+      store.articleId = 0
+    })
+  }
+})
 </script>
 
 <template>

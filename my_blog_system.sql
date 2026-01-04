@@ -11,7 +11,7 @@
  Target Server Version : 90400 (9.4.0)
  File Encoding         : 65001
 
- Date: 04/01/2026 03:26:13
+ Date: 04/01/2026 09:16:17
 */
 
 SET NAMES utf8mb4;
@@ -34,7 +34,7 @@ CREATE TABLE `t_article`  (
   `thumbnail` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '文章缩略图',
   `user_id` int NULL DEFAULT NULL COMMENT '作者ID',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 37 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 41 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_article
@@ -74,6 +74,10 @@ INSERT INTO `t_article` VALUES (33, '我再再来发布一篇看看', NULL, '<p>
 INSERT INTO `t_article` VALUES (34, '我看看普通用户能不能创建文章', NULL, '<p>这里是</p>', '2026-01-04 02:23:38', NULL, '默认分类', '', 1, '/api/images/6.png', 5);
 INSERT INTO `t_article` VALUES (35, '我现在要来验证一下分类标签功能是否能正常使用', NULL, '<p>希望可以</p>', '2026-01-04 02:52:44', NULL, '技术/后端/Java', '#Java #技术实现', 1, '/api/images/6.png', 6);
 INSERT INTO `t_article` VALUES (36, '为什么这个图片显示不出来了', NULL, '<p><img src=\"/api/images/0a470eb5-6588-407d-bdd7-bdd88b0d9f39.png\" alt=\"\">现在我上传了一篇带图片的文章</p>', '2026-01-04 03:15:25', NULL, '技术/前端/Vue3', '#bug #交流', 1, '/api/images/d9fbf556-a0e6-4528-96a2-e43c0bc8daa0.png', 1);
+INSERT INTO `t_article` VALUES (37, '测试', NULL, '<p>test</p>', '2026-01-04 08:28:19', NULL, '技术/SpringBoot', '', 1, '/api/images/6.png', 2);
+INSERT INTO `t_article` VALUES (38, 'bug一个', NULL, '<p>为什么无法自动创建文章分类</p>', '2026-01-04 09:05:44', NULL, '默认分类', '#bug #', 1, '/api/images/6.png', 6);
+INSERT INTO `t_article` VALUES (39, '', NULL, '', '2026-01-04 09:09:19', NULL, '默认分类', '', 1, '/api/images/6.png', 6);
+INSERT INTO `t_article` VALUES (40, '测试', NULL, '<p>测试一下根据分类创建文章能不能运行</p>', '2026-01-04 09:12:52', NULL, '技术/SpringBoot', '#test #测试', 1, '/api/images/6.png', 6);
 
 -- ----------------------------
 -- Table structure for t_authority
@@ -101,7 +105,7 @@ CREATE TABLE `t_category`  (
   `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '分类名称',
   `sort` int NULL DEFAULT 0 COMMENT '排序（越小越前）',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '无限级文章分类表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '无限级文章分类表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_category
@@ -113,7 +117,8 @@ INSERT INTO `t_category` VALUES (4, 1, '前端', 3);
 INSERT INTO `t_category` VALUES (5, 3, 'Java', 1);
 INSERT INTO `t_category` VALUES (6, 1, 'SpringBoot', 1);
 INSERT INTO `t_category` VALUES (7, 4, 'Vue3', 1);
-INSERT INTO `t_category` VALUES (8, 0, '学习', 0);
+INSERT INTO `t_category` VALUES (8, 0, '学习', 3);
+INSERT INTO `t_category` VALUES (9, 2, '美食', 0);
 
 -- ----------------------------
 -- Table structure for t_comment
@@ -130,7 +135,7 @@ CREATE TABLE `t_comment`  (
   `user_id` int NULL DEFAULT NULL COMMENT '评论者ID',
   `location` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT 'IP属地',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 77 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 81 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_comment
@@ -204,6 +209,10 @@ INSERT INTO `t_comment` VALUES (73, 32, '2026-01-04 02:34:31', '192.168.1.100', 
 INSERT INTO `t_comment` VALUES (74, 31, '2026-01-04 02:34:47', '192.168.1.100', '我继续评论admin的文章\n', 'approved', '123', NULL, '本地局域网');
 INSERT INTO `t_comment` VALUES (75, 34, '2026-01-04 02:35:14', '192.168.1.100', '我来评论一下123的文章', 'approved', 'zzt', NULL, '本地局域网');
 INSERT INTO `t_comment` VALUES (76, 36, '2026-01-04 03:23:24', '192.168.1.100', '修复成功啦', 'approved', 'zzt', NULL, '本地局域网');
+INSERT INTO `t_comment` VALUES (77, 30, '2026-01-04 08:24:58', '192.168.1.105', '我现在在哪里', 'approved', '李四', NULL, '本地局域网');
+INSERT INTO `t_comment` VALUES (78, 37, '2026-01-04 08:30:52', '192.168.1.102', '我来回复一下', 'approved', '李四', NULL, '本地局域网');
+INSERT INTO `t_comment` VALUES (79, 37, '2026-01-04 08:32:03', '192.168.1.102', '我也来回复一下', 'approved', 'tom', NULL, '本地局域网');
+INSERT INTO `t_comment` VALUES (80, 40, '2026-01-04 09:13:37', '192.168.1.102', '看来是可以！', 'approved', '东方不败', NULL, '本地局域网');
 
 -- ----------------------------
 -- Table structure for t_notification
@@ -220,7 +229,7 @@ CREATE TABLE `t_notification`  (
   `is_read` tinyint(1) NULL DEFAULT 0 COMMENT '0:未读, 1:已读',
   `created` datetime NULL DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '消息通知表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '消息通知表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_notification
@@ -234,6 +243,9 @@ INSERT INTO `t_notification` VALUES (6, 5, '123', 1, 32, '评论了你的文章:
 INSERT INTO `t_notification` VALUES (7, 5, '123', 1, 31, '评论了你的文章: 我继续评论admin的文章\n', 'COMMENT', 1, '2026-01-04 02:34:47');
 INSERT INTO `t_notification` VALUES (8, 6, 'zzt', 5, 34, '评论了你的文章: 我来评论一下123的文章', 'COMMENT', 1, '2026-01-04 02:35:14');
 INSERT INTO `t_notification` VALUES (9, 6, 'zzt', 1, 36, '评论了你的文章: 修复成功啦', 'COMMENT', 0, '2026-01-04 03:23:24');
+INSERT INTO `t_notification` VALUES (10, 2, '李四', 6, 30, '评论了你的文章: 我现在在哪里', 'COMMENT', 1, '2026-01-04 08:24:58');
+INSERT INTO `t_notification` VALUES (11, 4, 'tom', 2, 37, '评论了你的文章: 我也来回复一下', 'COMMENT', 1, '2026-01-04 08:32:03');
+INSERT INTO `t_notification` VALUES (12, 3, '东方不败', 6, 40, '评论了你的文章: 看来是可以！', 'COMMENT', 1, '2026-01-04 09:13:37');
 
 -- ----------------------------
 -- Table structure for t_op_log
@@ -247,7 +259,7 @@ CREATE TABLE `t_op_log`  (
   `target_id` int NULL DEFAULT NULL COMMENT '关联的目标ID，如文章ID',
   `created` datetime NOT NULL COMMENT '操作时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 170 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户操作日志表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 184 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户操作日志表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_op_log
@@ -421,6 +433,20 @@ INSERT INTO `t_op_log` VALUES (166, 1, 'BROWSE', '浏览了文章: 为什么这�
 INSERT INTO `t_op_log` VALUES (167, 1, 'BROWSE', '浏览了文章: 为什么这个图片显示不出来了', 36, '2026-01-04 03:23:07');
 INSERT INTO `t_op_log` VALUES (168, 6, 'BROWSE', '浏览了文章: 为什么这个图片显示不出来了', 36, '2026-01-04 03:23:16');
 INSERT INTO `t_op_log` VALUES (169, 6, 'COMMENT', '评论了文章: 修复成功啦', 36, '2026-01-04 03:23:24');
+INSERT INTO `t_op_log` VALUES (170, 6, 'BROWSE', '浏览了文章: 为什么这个图片显示不出来了', 36, '2026-01-04 07:55:07');
+INSERT INTO `t_op_log` VALUES (171, 6, 'BROWSE', '浏览了文章: Docker常用客户端指令介绍', 10, '2026-01-04 07:57:46');
+INSERT INTO `t_op_log` VALUES (172, 2, 'BROWSE', '浏览了文章: IP测试', 30, '2026-01-04 08:24:51');
+INSERT INTO `t_op_log` VALUES (173, 2, 'COMMENT', '评论了文章: 我现在在哪里', 30, '2026-01-04 08:24:58');
+INSERT INTO `t_op_log` VALUES (174, 2, 'BROWSE', '浏览了文章: 测试', 37, '2026-01-04 08:30:43');
+INSERT INTO `t_op_log` VALUES (175, 2, 'COMMENT', '评论了文章: 我来回复一下', 37, '2026-01-04 08:30:52');
+INSERT INTO `t_op_log` VALUES (176, 2, 'BROWSE', '浏览了文章: 测试', 37, '2026-01-04 08:31:03');
+INSERT INTO `t_op_log` VALUES (177, 4, 'BROWSE', '浏览了文章: 测试', 37, '2026-01-04 08:31:56');
+INSERT INTO `t_op_log` VALUES (178, 4, 'COMMENT', '评论了文章: 我也来回复一下', 37, '2026-01-04 08:32:03');
+INSERT INTO `t_op_log` VALUES (179, 6, 'BROWSE', '浏览了文章: 2018新版Java学习路线图', 1, '2026-01-04 08:49:31');
+INSERT INTO `t_op_log` VALUES (180, 3, 'BROWSE', '浏览了文章: JDK 8——聚合操作', 8, '2026-01-04 09:06:38');
+INSERT INTO `t_op_log` VALUES (181, 3, 'BROWSE', '浏览了文章: 测试', 40, '2026-01-04 09:13:16');
+INSERT INTO `t_op_log` VALUES (182, 3, 'BROWSE', '浏览了文章: 测试', 40, '2026-01-04 09:13:22');
+INSERT INTO `t_op_log` VALUES (183, 3, 'COMMENT', '评论了文章: 看来是可以！', 40, '2026-01-04 09:13:37');
 
 -- ----------------------------
 -- Table structure for t_reply
@@ -438,7 +464,7 @@ CREATE TABLE `t_reply`  (
   `ip` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '回复人IP',
   `location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'IP属地',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 32 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '子评论/回复表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 35 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '子评论/回复表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_reply
@@ -474,6 +500,9 @@ INSERT INTO `t_reply` VALUES (28, '我来回复一下你', '123', '2026-01-04 01
 INSERT INTO `t_reply` VALUES (29, '你好', '123', '2026-01-04 01:45:16', 60, NULL, NULL, 5, '142.249.36.185', '加拿大|0|0|0');
 INSERT INTO `t_reply` VALUES (30, '回复一下你的评论', '123', '2026-01-04 01:58:49', 56, NULL, NULL, 5, '142.249.36.185', '加拿大|0|0|0');
 INSERT INTO `t_reply` VALUES (31, '你好,新年快乐', '123', '2026-01-04 02:35:36', 75, NULL, NULL, 5, '192.168.1.100', '本地局域网');
+INSERT INTO `t_reply` VALUES (32, '学的怎么样了', 'zzt', '2026-01-04 08:05:37', 3, NULL, NULL, 6, '192.168.1.102', '本地局域网');
+INSERT INTO `t_reply` VALUES (33, '本地局域网。。。', '李四', '2026-01-04 08:25:18', 77, NULL, NULL, 2, '192.168.1.105', '本地局域网');
+INSERT INTO `t_reply` VALUES (34, '加拿大', '李四', '2026-01-04 08:25:28', 62, NULL, NULL, 2, '192.168.1.105', '本地局域网');
 
 -- ----------------------------
 -- Table structure for t_statistic
@@ -485,21 +514,21 @@ CREATE TABLE `t_statistic`  (
   `hits` int NOT NULL DEFAULT 0 COMMENT '文章点击总量',
   `comments_num` int NOT NULL DEFAULT 0 COMMENT '文章评论总量',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 35 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 39 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_statistic
 -- ----------------------------
-INSERT INTO `t_statistic` VALUES (1, 1, 101, 5);
+INSERT INTO `t_statistic` VALUES (1, 1, 102, 5);
 INSERT INTO `t_statistic` VALUES (2, 2, 4, 0);
 INSERT INTO `t_statistic` VALUES (3, 3, 6, 0);
 INSERT INTO `t_statistic` VALUES (4, 4, 4, 0);
 INSERT INTO `t_statistic` VALUES (5, 5, 5, 0);
 INSERT INTO `t_statistic` VALUES (6, 6, 18, 0);
 INSERT INTO `t_statistic` VALUES (7, 7, 6, 0);
-INSERT INTO `t_statistic` VALUES (8, 8, 25, 1);
+INSERT INTO `t_statistic` VALUES (8, 8, 26, 1);
 INSERT INTO `t_statistic` VALUES (9, 9, 23, 0);
-INSERT INTO `t_statistic` VALUES (10, 10, 18, 1);
+INSERT INTO `t_statistic` VALUES (10, 10, 19, 1);
 INSERT INTO `t_statistic` VALUES (11, 11, 11, 1);
 INSERT INTO `t_statistic` VALUES (12, 12, 43, 1);
 INSERT INTO `t_statistic` VALUES (13, 20, 5, 0);
@@ -516,14 +545,18 @@ INSERT INTO `t_statistic` VALUES (23, 26, 4, 0);
 INSERT INTO `t_statistic` VALUES (24, 27, 9, 0);
 INSERT INTO `t_statistic` VALUES (25, 28, 24, 0);
 INSERT INTO `t_statistic` VALUES (26, 29, 6, 0);
-INSERT INTO `t_statistic` VALUES (27, 30, 39, 0);
+INSERT INTO `t_statistic` VALUES (27, 30, 40, 0);
 INSERT INTO `t_statistic` VALUES (28, 16, 1, 0);
 INSERT INTO `t_statistic` VALUES (29, 31, 1, 0);
 INSERT INTO `t_statistic` VALUES (30, 32, 1, 0);
 INSERT INTO `t_statistic` VALUES (31, 33, 2, 0);
 INSERT INTO `t_statistic` VALUES (32, 34, 7, 0);
 INSERT INTO `t_statistic` VALUES (33, 35, 1, 0);
-INSERT INTO `t_statistic` VALUES (34, 36, 3, 0);
+INSERT INTO `t_statistic` VALUES (34, 36, 5, 0);
+INSERT INTO `t_statistic` VALUES (35, 37, 3, 0);
+INSERT INTO `t_statistic` VALUES (36, 38, 0, 0);
+INSERT INTO `t_statistic` VALUES (37, 39, 0, 0);
+INSERT INTO `t_statistic` VALUES (38, 40, 2, 0);
 
 -- ----------------------------
 -- Table structure for t_user

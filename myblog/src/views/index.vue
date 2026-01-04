@@ -81,6 +81,11 @@ function handleCurrentChange(newPage) {
   data.pageParams.page = newPage
   getIndexData() // 或者调用其他获取分页数据的方法
 }
+
+// 跳转到 GitHub
+function toGithub() {
+  window.open('https://github.com/Zzt147/-SpringBoot-Vue3-', '_blank')
+}
 </script>
 
 <template>
@@ -114,7 +119,7 @@ function handleCurrentChange(newPage) {
         <el-image :src="imageMeUrl" />
         <div style="margin-top:16px;">Java后台开发</div>
         <div style="margin-top:16px;">
-          个人博客小站，主要发表关于Java、Spring、Docker等相关文章
+          <span style="text-decoration: line-through;">个人</span>(并非)博客小站，主要发表关于Java、Spring、Docker等相关文章
         </div>
       </fieldset>
 
@@ -124,7 +129,7 @@ function handleCurrentChange(newPage) {
           <h3>联系我</h3>
         </legend>
         <el-space :size="size">
-          <font-awesome-icon class="icon" :icon="['fab', 'github']" size="lg" border />
+          <font-awesome-icon class="icon" :icon="['fab', 'github']" size="lg" border @click="toGithub" />
           <font-awesome-icon class="icon" :icon="['fab', 'weibo']" size="lg" border />
         </el-space>
       </fieldset>
