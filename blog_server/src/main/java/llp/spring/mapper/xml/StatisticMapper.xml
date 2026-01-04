@@ -2,4 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="llp.spring.mapper.StatisticMapper">
 
+    <resultMap id="BaseResultMap" type="llp.spring.entity.Statistic">
+        <id column="id" property="id" />
+        <result column="article_id" property="articleId" />
+        <result column="hits" property="hits" />
+        <result column="comments_num" property="commentsNum" />
+
+        <result column="likes" property="likes" />
+    </resultMap>
+
 </mapper>

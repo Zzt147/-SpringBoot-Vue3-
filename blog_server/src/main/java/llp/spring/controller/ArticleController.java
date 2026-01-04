@@ -33,7 +33,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/article")  // 为控制器指定访问路径
@@ -150,19 +152,18 @@ public class ArticleController {
     public String publishArticle(String type, @RequestBody Article article) {
         try {
             // === 【新增核心代码 START】 ===
-            // 1. 获取当前登录的安全主体
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-            // 2. 判断是否已登录
             if (principal instanceof UserDetails) {
                 String username = ((UserDetails) principal).getUsername();
-                // 3. 查询数据库获取完整的用户信息（主要是为了拿 ID）
                 User user = userService.selectByUsername(username);
 
                 if (user != null) {
-                    // 4. 强制设置文章作者为当前登录用户
-                    article.setUserId(user.getId());      // 设置作者ID (数据库字段: user_id)
-                    article.setAuthorName(user.getUsername()); // 设置作者名 (数据库字段: author)
+                    article.setUserId(user.getId());      // 保存用户ID
+                    article.setAuthorName(user.getUsername());
+
+                    // 【👇👇👇 请务必加上这一行 👇👇👇】
+                    article.setAuthor(user.getUsername()); // 将用户名存入数据库 author 字段
                 }
             }
             // === 【新增核心代码 END】 ===
@@ -259,6 +260,40 @@ public class ArticleController {
         } catch (Exception e) {
             e.printStackTrace();
             result.setErrorMessage("获取文章失败");
+        }
+        return result;
+    }
+
+    // 【新增】获取所有标签（用于标签云）
+    @GetMapping("/getAllTags")
+    public Result getAllTags() {
+        Result result = new Result();
+        try {
+            // 1. 查询所有文章的标签字段
+            // 这里的 QueryWrapper 应该引入 com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
+            List<Article> list = articleService.list(new QueryWrapper<Article>().select("tags"));
+
+            // 2. 解析并去重
+            Set<String> tagSet = new HashSet<>();
+            for (Article article : list) {
+                String tags = article.getTags();
+                if (tags != null && !tags.isEmpty()) {
+                    // 兼容中文逗号
+                    String[] splitTags = tags.replace("，", ",").split(",");
+                    for (String t : splitTags) {
+                        if (!t.trim().isEmpty()) {
+                            tagSet.add(t.trim());
+                        }
+                    }
+                }
+            }
+
+            // 3. 返回结果
+            result.getMap().put("tags", tagSet);
+            result.setSuccess(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.setErrorMessage("获取标签失败");
         }
         return result;
     }

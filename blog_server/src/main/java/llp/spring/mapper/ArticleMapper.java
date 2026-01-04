@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface ArticleMapper extends BaseMapper<Article> {
@@ -38,4 +39,12 @@ public interface ArticleMapper extends BaseMapper<Article> {
     IPage<Article> getAPageOfArticle(IPage<Article> page, @Param("ew") QueryWrapper<ArticleVO> wrapper);
 
     // ...
+    // === 【新增】按分类统计文章数量 ===
+    @Select("SELECT categories AS name, COUNT(*) AS value FROM t_article GROUP BY categories")
+    List<Map<String, Object>> getArticleCountByCategory();
+
+    // === 【新增】获取所有文章的标签（用于后端统计词频）===
+    @Select("SELECT tags FROM t_article")
+    List<String> getAllTags();
+    // === 【搜索/筛选接口】 ===
 }

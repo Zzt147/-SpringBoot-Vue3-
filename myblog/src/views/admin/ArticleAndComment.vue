@@ -7,6 +7,7 @@ import { ElMessageBox, ElMessage } from 'element-plus'; // 引入 ElMessage
 import { ref, computed, onMounted, watch } from 'vue'
 import { useStore } from '@/stores/my'
 import { marked } from 'marked'
+import { LocationInformation } from '@element-plus/icons-vue'
 
 const route = useRoute();
 const axios = inject('axios');
@@ -177,12 +178,23 @@ function submit() {
         {{ articleAndComment.article.title }}
       </h1>
 
-      <div style="text-align: center; color: #999; margin-bottom: 20px;">
-        <span v-if="articleAndComment.article.created">
-          发布于: {{ articleAndComment.article.created }}
-        </span>
-      </div>
+      <div class="article-meta-bar">
+        <div class="meta-author">
+          <el-avatar :size="24"
+            :src="store.user.user?.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
+          <span style="margin-left: 8px;">{{ articleAndComment.article.author || '未知作者' }}</span>
+        </div>
 
+        <div class="meta-info">
+          <span>发布于: {{ articleAndComment.article.created }}</span>
+
+          <span v-if="articleAndComment.article.location" style="margin-left: 15px;">
+            <el-icon>
+              <LocationInformation />
+            </el-icon> {{ articleAndComment.article.location }}
+          </span>
+        </div>
+      </div>
       <el-divider />
     </el-col>
   </el-row>
@@ -257,5 +269,29 @@ function submit() {
 
 .markdown-body img {
   max-width: 100%;
+}
+
+/* 新增样式 */
+.article-meta-bar {
+  display: flex;
+  justify-content: space-between;
+  /* 左右对齐 */
+  align-items: center;
+  color: #999;
+  margin-bottom: 20px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.meta-author {
+  display: flex;
+  align-items: center;
+  color: #333;
+  font-weight: bold;
+}
+
+.meta-info {
+  display: flex;
+  align-items: center;
 }
 </style>

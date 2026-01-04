@@ -19,4 +19,7 @@ public class ArticleCondition {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date endDate;
+
+    // 【新增】标签查询字段
+    private String tag;
 }

@@ -2,4 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="llp.spring.mapper.ArticleMapper">
 
+    <select id="getAPageOfArticleVO" resultType="llp.spring.entity.vo.ArticleVO">
+        SELECT t_article.id, t_article.title,
+               IFNULL(t_statistic.hits, 0) AS hits,
+               IFNULL(t_statistic.comments_num, 0) AS commentsNum,
+               IFNULL(t_statistic.likes, 0) AS likes  FROM t_article
+                                                               LEFT JOIN t_statistic ON t_article.id = t_statistic.article_id
+            ${ew.customSqlSegment}
+    </select>
+
 </mapper>

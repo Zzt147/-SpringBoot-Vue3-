@@ -20,6 +20,7 @@
     "@tinymce/tinymce-vue": "^5.1.1",
     "axios": "^1.12.2",
     "element-plus": "^2.11.2",
+    "leaflet": "^1.9.4",
     "marked": "^17.0.1",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.7.1",

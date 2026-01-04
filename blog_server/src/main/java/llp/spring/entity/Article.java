@@ -55,6 +55,10 @@ public class Article implements Serializable {
     @TableField(exist = false)
     private String authorName;
 
+    private String author;
+
+    // 【新增】发布地点
+    private String location;
 
 }
 
