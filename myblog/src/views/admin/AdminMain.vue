@@ -30,10 +30,36 @@ function editArticle() { // 跳转至编辑文章
 }
 provide("editArticle", editArticle)
 
-function gotoArticleManage() { // 跳转至管理文章（文章列表）
+function toArticleManage() { // 跳转至管理文章（文章列表）
   router.push({ name: "manageArticle" })
 }
-provide("gotoArticleManage", gotoArticleManage)
+provide("toArticleManage", toArticleManage)
+
+function toDashboard() { // 跳转至数据仪表盘
+  router.push({ name: "Dashboard" })
+}
+provide("toDashboard", toDashboard)
+
+function toManageComment() { // 跳转至评论管理
+  router.push({ name: "manageComment" })
+}
+provide("toManageComment", toManageComment)
+
+function toManageCategory() { // 跳转至标签分类管理
+  router.push({ name: "ManageCategory" })
+}
+provide("toManageCategory", toManageCategory)
+
+function toSystemSettings() { // 跳转至系统设置
+  router.push({ name: "SystemSettings" })
+}
+provide("toSystemSettings", toSystemSettings)
+
+function toPublishArticle() { // 跳转至发布文章
+  router.push({ name: "publishArticle" })
+}
+provide("toPublishArticle", toPublishArticle)
+
 // 6. 新增：退出登录函数 (模仿 Top.vue 的逻辑)
 function toExit() {
   axios({
@@ -67,38 +93,38 @@ function toExit() {
         <el-col>
           <el-menu router active-text-color="white" background-color="#545c64" text-color="#fff"
             :collapse="aside_state.collapse" :collapse-transition="false">
-            <el-menu-item>
+            <el-menu-item @click="toDashboard">
               <el-icon>
                 <Odometer />
               </el-icon>
               <span>仪表盘</span>
             </el-menu-item>
-            <el-menu-item index="/admin_Main/publish_article">
+            <el-menu-item @click="toPublishArticle">
               <el-icon>
                 <Edit />
               </el-icon>
               <span>发布文章</span>
             </el-menu-item>
-            <el-menu-item index="/admin_Main/manage_article">
+            <el-menu-item @click="toArticleManage">
               <el-icon>
                 <Memo />
               </el-icon>
               <span>文章管理</span>
             </el-menu-item>
             <!--评论管理功能-->
-            <el-menu-item index="/admin_Main/manage_comment">
+            <el-menu-item @click="toManageComment">
               <el-icon>
                 <ChatDotSquare />
               </el-icon>
               <span>评论管理</span>
             </el-menu-item>
-            <el-menu-item index="/admin/manageCategory">
+            <el-menu-item @click="toManageCategory">
               <el-icon>
                 <Filter />
               </el-icon>
               <span>标签分类</span>
             </el-menu-item>
-            <el-menu-item>
+            <el-menu-item @click="toSystemSettings">
               <el-icon>
                 <Setting />
               </el-icon>

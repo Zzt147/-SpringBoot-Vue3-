@@ -77,4 +77,10 @@ public class Comment implements Serializable {
      * IP属地
      */
     private String location; // 【新增】
+
+    // === 👇👇👇 在这里添加 likes 字段 👇👇👇 ===
+    // 评论的点赞数通常直接存在 t_comment 表里（如果你之前执行了 SQL）
+    // 所以这里不需要 exist=false，除非你的表里确实没这个字段
+    private Integer likes = 0;
+    // ===========================================
 }

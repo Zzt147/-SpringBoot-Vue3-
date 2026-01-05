@@ -1,5 +1,6 @@
 package llp.spring.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import llp.spring.mapper.ArticleMapper;
 import llp.spring.tools.ArticleSearch;
 import llp.spring.tools.PageParams;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +38,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import llp.spring.entity.vo.ArticleVO;
+
 @RestController
 @RequestMapping("/api/article")  // 为控制器指定访问路径
 public class ArticleController {
@@ -52,6 +55,10 @@ public class ArticleController {
     // 20251217新增功能 - 完善个人中心与浏览足迹
     @Autowired
     private IUserService userService;
+
+    // === 👇👇👇 添加这部分代码 👇👇👇 ===
+    @Autowired
+    private ArticleMapper articleMapper;
 
     // 方法1：主页打开时或从文章返回主页时调用
     @PostMapping("/getIndexData1")
@@ -295,6 +302,16 @@ public class ArticleController {
             e.printStackTrace();
             result.setErrorMessage("获取标签失败");
         }
+        return result;
+    }
+
+    // 【新增】获取点赞排行榜数据
+    @GetMapping("/getLikeRanking")
+    public Result getLikeRanking() {
+        Result result = new Result();
+        List<ArticleVO> list = articleMapper.getLikeRanking();
+        result.getMap().put("articleVOs", list);
+        result.setSuccess(true);
         return result;
     }
 }

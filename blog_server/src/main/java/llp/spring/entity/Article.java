@@ -60,5 +60,12 @@ public class Article implements Serializable {
     // 【新增】发布地点
     private String location;
 
+    // === 👇👇👇 在这里添加 likes 字段 👇👇👇 ===
+    // 这里的 exist=false 是因为文章的点赞数存在 t_statistic 表里，而不是 t_article 表
+    // 我们需要手动查询出来塞进去
+    @TableField(exist = false)
+    private Integer likes = 0;
+    // ===========================================
+
 }
 

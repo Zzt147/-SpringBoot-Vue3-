@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, inject, provide, nextTick, onMounted } from 'vue'
+import { reactive, ref, inject, provide, nextTick, onMounted, watch } from 'vue'
 import Editor from '@tinymce/tinymce-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useStore } from '@/stores/my'
@@ -54,7 +54,7 @@ const image_upload_handler = (blobInfo, progress) => new Promise((resolve, rejec
   xhr.send(formData);
 });
 
-const apiKey = ref('bdddx89zynvfw2qmzfk2mhycdiss6ujej1hkf49al3p0omcc')
+const apiKey = ref('hyeykcd9rhyowt7om2q282pbdhjd8nnw7tci613prb5vgo7d')
 const init = reactive({
   language: "zh_CN",
   placeholder: "在这里输入文字",
@@ -77,6 +77,31 @@ let article = reactive({
 
 const cropper1 = ref(null)
 
+// === 【新增功能】自动保存草稿 ===
+const DRAFT_KEY = 'blog_publish_draft_v1' // 草稿存储Key
+
+// 监听 article 对象变化，自动保存
+let draftTimer = null
+watch(article, (newVal) => {
+  // 防抖处理：如果1秒内连续输入，清除上一次的定时器
+  if (draftTimer) clearTimeout(draftTimer)
+
+  draftTimer = setTimeout(() => {
+    // 保存关键字段
+    const draftData = {
+      title: newVal.title,
+      tags: newVal.tags,
+      content: newVal.content,
+      categories: newVal.categories,
+      location: newVal.location,
+      thumbnail: newVal.thumbnail // 注意：这里保存的是 url，如果是 Cropper 未上传的截图可能无法保存
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData))
+    // 可以选择在控制台打印日志方便调试
+    // console.log('草稿已自动保存', new Date().toLocaleTimeString())
+  }, 5000) // 1秒后执行保存
+}, { deep: true }) // 深度监听
+
 // === 1. 自动获取定位 ===
 function autoLocate() {
   if (!navigator.geolocation) {
@@ -84,38 +109,33 @@ function autoLocate() {
     return
   }
 
-  // 【修复点】ElMessage 没有 loading 方法，使用标准调用方式
   const loadingMsg = ElMessage({
     message: '正在尝试获取定位...',
     type: 'info',
-    duration: 0, // 设置为0则不会自动关闭
+    duration: 0,
     showClose: true
   })
 
   navigator.geolocation.getCurrentPosition(async (position) => {
     const { latitude, longitude } = position.coords
     try {
-      // 使用 OpenStreetMap 的接口
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&accept-language=zh-CN`)
       const data = await res.json()
-
       const addr = data.address
-      // 优先获取城市，其次是城镇、县、州
       const city = addr.city || addr.town || addr.county || addr.state || '未知位置'
-
       article.location = city
-
-      loadingMsg.close() // 【关键】获取成功后手动关闭提示
+      loadingMsg.close()
       ElMessage.success('定位成功: ' + city)
     } catch (e) {
-      loadingMsg.close() // 出错也要关闭
+      loadingMsg.close()
       ElMessage.error('获取地址名称失败，请手动输入')
     }
   }, (err) => {
-    loadingMsg.close() // 出错也要关闭
+    loadingMsg.close()
     ElMessage.error('自动定位失败，请检查浏览器权限或使用地图选取')
   }, { timeout: 10000 })
 }
+
 // === 2. 打开地图手动选取 ===
 function openMap() {
   mapVisible.value = true
@@ -125,38 +145,26 @@ function openMap() {
 }
 
 function initMap() {
-  if (mapInstance) return // 避免重复初始化
-
-  // 默认中心点 (北京)，如果已有位置则不设置
+  if (mapInstance) return
   const defaultLat = 39.9042
   const defaultLng = 116.4074
-
   mapInstance = L.map('map-container').setView([defaultLat, defaultLng], 4)
-
-  // 加载 OpenStreetMap 图层
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(mapInstance)
 
-  // 点击地图事件
   mapInstance.on('click', async (e) => {
     const { lat, lng } = e.latlng
-
-    // 移动标记
     if (markerInstance) {
       markerInstance.setLatLng(e.latlng)
     } else {
       markerInstance = L.marker(e.latlng).addTo(mapInstance)
     }
-
-    // 解析地址
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&accept-language=zh-CN`)
       const data = await res.json()
       const addr = data.address
-      // 优先取城市，没有则取省份或国家
       const locationName = addr.city || addr.town || addr.county || addr.state || data.display_name.split(',')[0]
-
       article.location = locationName
       ElMessage.success(`已选中: ${locationName}`)
     } catch (err) {
@@ -194,6 +202,9 @@ function publishArticle() {
   }).then((response) => {
     ElMessageBox.alert(response.data, '结果')
     if ("添加成功！" == response.data || "修改成功！" == response.data) {
+      // === 【新增】发布成功，清除草稿 ===
+      localStorage.removeItem(DRAFT_KEY)
+      // ==============================
       clearData()
       window.scrollTo(0, 0)
     }
@@ -216,7 +227,7 @@ function clearData() {
   article.tags = ""
   article.content = ""
   article.categories = ""
-  article.location = "" // 清空位置
+  article.location = ""
   selectedCategory.value = []
   article.thumbnail = ""
   cropper1.value.clearData()
@@ -224,12 +235,54 @@ function clearData() {
 
 onMounted(() => {
   loadCategoryTree()
+
+  // 1. 处理分类回显
   if (route.query.categoryPath) {
     const pathStr = route.query.categoryPath
     selectedCategory.value = pathStr.split('/')
     article.categories = pathStr
   }
 
+  // 2. 检查是否有草稿 (放在编辑模式之前，避免覆盖编辑数据，但用户确认后可覆盖)
+  const draftStr = localStorage.getItem(DRAFT_KEY)
+  if (draftStr) {
+    const draft = JSON.parse(draftStr)
+    // 只要标题或内容不为空，就提示恢复
+    if (draft.title || draft.content) {
+      ElMessageBox.confirm(
+        '检测到您上次有未发布的草稿，是否恢复？',
+        '恢复草稿',
+        {
+          confirmButtonText: '恢复内容',
+          cancelButtonText: '丢弃',
+          type: 'info',
+        }
+      ).then(() => {
+        // 恢复数据
+        article.title = draft.title || ""
+        article.content = draft.content || ""
+        article.tags = draft.tags || ""
+        article.location = draft.location || ""
+        article.categories = draft.categories || ""
+        article.thumbnail = draft.thumbnail || ""
+
+        // 恢复分类选择框
+        if (article.categories) {
+          selectedCategory.value = article.categories.split('/')
+        }
+        // 恢复缩略图 (如果缩略图是已上传的图片链接)
+        if (article.thumbnail && article.thumbnail.indexOf("/api") == 0 && cropper1.value) {
+          cropper1.value.setThumbnail(article.thumbnail)
+        }
+        ElMessage.success('草稿已恢复')
+      }).catch(() => {
+        localStorage.removeItem(DRAFT_KEY) // 丢弃草稿
+        ElMessage.info('已丢弃草稿')
+      })
+    }
+  }
+
+  // 3. 处理编辑模式 (如果 store.articleId > 0)
   if (store.articleId > 0) {
     type = "edit"
     header.value = "编辑文章"
@@ -240,11 +293,16 @@ onMounted(() => {
       if (response.data.success) {
         let nowArticle = response.data.map.article
         article.id = nowArticle.id
+        // 如果用户刚才点了"恢复草稿"，这里的赋值会覆盖草稿。
+        // 但通常 axios 是异步的，且"恢复草稿"是需要用户点击确认的。
+        // 逻辑顺序：页面加载 -> 弹出询问恢复 -> 发送请求获取编辑数据 -> 请求返回覆盖数据 -> 用户点击恢复覆盖数据。
+        // 这样设计是合理的：用户点击恢复的动作通常比请求返回慢，所以草稿最终会覆盖服务器旧数据，达到"恢复未保存工作"的目的。
+
         article.title = nowArticle.title
         article.tags = nowArticle.tags
         article.content = nowArticle.content
         article.thumbnail = nowArticle.thumbnail
-        article.location = nowArticle.location || "" // 回显位置
+        article.location = nowArticle.location || ""
 
         if (nowArticle.categories) {
           article.categories = nowArticle.categories

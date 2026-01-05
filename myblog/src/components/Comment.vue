@@ -3,6 +3,7 @@ import { reactive, ref, inject, onMounted } from 'vue'
 import { useStore } from '@/stores/my'
 import { ElMessage } from 'element-plus'
 import { dateFormat } from '../js/tool' // 确保你的 tool.js 有这个方法
+import { Sugar, LocationInformation } from '@element-plus/icons-vue' // 引入图标
 
 // 接收父组件传递的参数
 const props = defineProps(['comment', 'floor'])
@@ -50,7 +51,7 @@ function toggleReplies() {
   showAllReplies.value = !showAllReplies.value
 }
 
-// 点击“回复”按钮 (准备回复)
+// 点击"回复"按钮 (准备回复)
 // targetUser: 目标用户对象 (如果传null，表示回复层主)
 function prepareReply(targetUser) {
   // 1. 检查登录
@@ -108,6 +109,28 @@ onMounted(() => {
     loadReplies()
   }
 })
+
+// 通用的点赞函数，支持主评论和回复
+function likeTargetComment(commentObj) {
+  if (!store.user.user) {
+    ElMessage.warning("请先登录")
+    return
+  }
+
+  axios.post('/api/comment/likeComment?commentId=' + commentObj.id)
+    .then(res => {
+      if (res.data.success) {
+        if (!commentObj.likes) commentObj.likes = 0
+        if (res.data.msg === "点赞成功") {
+          commentObj.likes++
+        } else if (res.data.msg === "取消点赞") {
+          commentObj.likes--
+        }
+      } else {
+        ElMessage.warning(res.data.msg)
+      }
+    })
+}
 </script>
 
 <template>
@@ -125,7 +148,16 @@ onMounted(() => {
         <div class="comment-actions">
           <span class="time-text">{{ dateFormat(comment.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
           <span class="location-text" v-if="comment.location" style="margin-left: 10px; color: #999; font-size: 12px;">
-            IP属地：{{ comment.location }}
+            <el-icon size="12" style="margin-right: 2px">
+              <LocationInformation />
+            </el-icon>
+            {{ comment.location }}
+          </span>
+          <span class="action-btn" @click="likeTargetComment(comment)" style="display:inline-flex; align-items:center;">
+            <el-icon style="margin-right:2px">
+              <Sugar />
+            </el-icon>
+            {{ comment.likes || 0 }}
           </span>
           <span class="action-btn" @click="prepareReply(null)">回复</span>
         </div>
@@ -149,8 +181,17 @@ onMounted(() => {
 
         <div class="reply-actions">
           <span class="time-text">{{ dateFormat(reply.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
-          <span class="location-text" v-if="comment.location" style="margin-left: 10px; color: #999; font-size: 12px;">
-            IP属地：{{ comment.location }}
+          <span class="location-text" v-if="reply.location" style="margin-left: 10px; color: #999; font-size: 12px;">
+            <el-icon size="12" style="margin-right: 2px">
+              <LocationInformation />
+            </el-icon>
+            {{ reply.location }}
+          </span>
+          <span class="action-btn" @click="likeTargetComment(reply)" style="display:inline-flex; align-items:center;">
+            <el-icon size="12" style="margin-right:2px">
+              <Sugar />
+            </el-icon>
+            {{ reply.likes || 0 }}
           </span>
           <span class="action-btn" @click="prepareReply({ id: reply.userId, username: reply.username })">
             回复
@@ -229,6 +270,8 @@ onMounted(() => {
   margin-left: 15px;
   cursor: pointer;
   color: #666;
+  display: inline-flex;
+  align-items: center;
 }
 
 .action-btn:hover {

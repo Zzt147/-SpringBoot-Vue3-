@@ -14,10 +14,6 @@ public interface StatisticMapper extends BaseMapper<Statistic> {
     @Select("SELECT IFNULL(SUM(hits), 0) FROM t_statistic")
     Long getTotalHits();
 
-    // 统计总评论数
-    @Select("SELECT IFNULL(SUM(comments_num), 0) FROM t_statistic")
-    Long getTotalComments();
-
     // === 点赞相关 ===
 
     // 1. 点赞数 +1
@@ -39,4 +35,9 @@ public interface StatisticMapper extends BaseMapper<Statistic> {
     // 5. 删除点赞记录 (取消点赞)
     @Delete("DELETE FROM t_article_like WHERE user_id = #{userId} AND article_id = #{articleId}")
     void deleteArticleLike(@Param("userId") Integer userId, @Param("articleId") Integer articleId);
+
+    // 【修改】统计总评论数 = 主评论表总数 + 回复表总数
+    // 原来的写法: SELECT IFNULL(SUM(comments_num), 0) FROM t_statistic
+    @Select("SELECT (SELECT COUNT(*) FROM t_comment) + (SELECT COUNT(*) FROM t_reply)")
+    Long getTotalComments();
 }

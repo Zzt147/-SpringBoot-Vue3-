@@ -4,6 +4,7 @@ import { reactive, inject, onMounted, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { dateFormat } from "@/js/tool.js"; // 导入日期格式化函数
 import { Search, Refresh, Loading } from '@element-plus/icons-vue'
+import { watch } from 'vue' // 引入 watch
 
 const data = reactive({
   articleCondition: {
@@ -29,6 +30,26 @@ const loading = ref(false)
 onMounted(() => {
   search()
 })
+
+// 防抖函数
+function debounce(fn, delay) {
+  let timer = null;
+  return function () {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn.apply(this, arguments)
+    }, delay)
+  }
+}
+
+// 监听搜索关键词，实现边打字边搜索
+watch(
+  () => data.articleCondition.title,
+  debounce((newVal) => {
+    data.pageParams.page = 1
+    doSearch()
+  }, 500)
+)
 
 function search() {
   // 重置到第一页（如果是新的搜索）

@@ -27,16 +27,24 @@ function gotoArticle() {
         <div class="meta-footer">
           <div class="meta-left">
             <el-tag size="small" type="info" effect="plain" class="meta-tag">
-              <el-icon>
-                <Calendar />
-              </el-icon> 发布于: {{ article.created }}
+              <span style="display: inline-flex; align-items: center; white-space: nowrap;">
+                <el-icon>
+                  <Calendar />
+                </el-icon>
+                <span>发布于: {{ article.created }}</span>
+              </span>
             </el-tag>
 
-            <el-tag v-if="article.location" size="small" type="success" effect="plain" class="meta-tag">
-              <el-icon>
-                <LocationInformation />
-              </el-icon> {{ article.location }}
+            <el-tag v-if="article.location" size="small" type="info" effect="plain" class="meta-tag"
+              style="margin-left: 8px;">
+              <span style="display: inline-flex; align-items: center; white-space: nowrap;">
+                <el-icon>
+                  <LocationInformation />
+                </el-icon>
+                <span>{{ article.location }}</span>
+              </span>
             </el-tag>
+
           </div>
 
           <div class="meta-right">

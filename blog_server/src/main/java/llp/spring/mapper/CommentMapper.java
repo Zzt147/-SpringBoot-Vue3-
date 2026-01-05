@@ -3,9 +3,7 @@ package llp.spring.mapper;
 import llp.spring.entity.Comment;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import llp.spring.entity.vo.UserCommentVO;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -109,5 +107,19 @@ public interface CommentMapper extends BaseMapper<Comment> {
             "</script>")
     Integer countAdminComments(@Param("author") String author);
 
+    // === 【新增】点赞相关方法 ===
+    @Update("UPDATE t_comment SET likes = likes + 1 WHERE id = #{commentId}")
+    void increaseLikes(Integer commentId);
 
+    @Update("UPDATE t_comment SET likes = IF(likes>0, likes - 1, 0) WHERE id = #{commentId}")
+    void decreaseLikes(Integer commentId);
+
+    @Select("SELECT COUNT(*) FROM t_comment_like WHERE user_id = #{userId} AND comment_id = #{commentId}")
+    Integer countCommentLike(@Param("userId") Integer userId, @Param("commentId") Integer commentId);
+
+    @Insert("INSERT INTO t_comment_like (user_id, comment_id) VALUES (#{userId}, #{commentId})")
+    void insertCommentLike(@Param("userId") Integer userId, @Param("commentId") Integer commentId);
+
+    @Delete("DELETE FROM t_comment_like WHERE user_id = #{userId} AND comment_id = #{commentId}")
+    void deleteCommentLike(@Param("userId") Integer userId, @Param("commentId") Integer commentId);
 }

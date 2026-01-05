@@ -35,6 +35,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+
+
 @Service
 @Transactional
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements ArticleService  {
@@ -108,7 +110,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     // 2. 分页获取文章列表
     public Result getAPageOfArticle(PageParams pageParams) {
         QueryWrapper<ArticleVO> wrapper = new QueryWrapper<>();
-        wrapper.orderBy(true, false, "t_article.id");
+
+        // 【修改】支持排序逻辑
+        if ("hot".equals(pageParams.getSort())) {
+            // 按点赞数倒序 (需要 Mapper SQL 中关联了 t_statistic 并别名为 s)
+            wrapper.orderByDesc("s.likes");
+        } else {
+            // 默认按 ID 倒序 (最新)
+            wrapper.orderBy(true, false, "t_article.id");
+        }
 
         Page<Article> page = new Page<Article>(pageParams.getPage(), pageParams.getRows());
         IPage<Article> aPage = articleMapper.getAPageOfArticle(page, wrapper);
@@ -132,6 +142,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
         result.getMap().put("articles", aPage.getRecords());
         result.getMap().put("pageParams", pageParams);
+
         return result;
     }
 
@@ -275,8 +286,27 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Cacheable(value = "article", key = "#id")
     public Article selectById(Integer id) {
+        // 1. 查询文章本体
         Article article = articleMapper.selectById(id);
+
+        // 2. 填充作者信息
         fillArticleAuthor(article);
+
+        // === 👇👇👇 新增：填充点赞数 👇👇👇 ===
+        if (article != null) {
+            // 从 t_statistic 表查询该文章的统计数据
+            Statistic statistic = statisticMapper.selectOne(
+                    new QueryWrapper<Statistic>().eq("article_id", id)
+            );
+            if (statistic != null) {
+                // 将统计表里的 likes 赋值给 article 对象
+                article.setLikes(statistic.getLikes());
+            } else {
+                article.setLikes(0);
+            }
+        }
+        // =====================================
+
         return article;
     }
 

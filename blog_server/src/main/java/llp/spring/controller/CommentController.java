@@ -248,5 +248,48 @@ public class CommentController {
         return result;
     }
 
+    // === 【新增】评论点赞/取消点赞 ===
+    @PostMapping("/likeComment")
+    public Result likeComment(Integer commentId) {
+        // 1. 获取当前用户
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username;
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+
+        if ("anonymousUser".equals(username)) {
+            return new Result(false, "请先登录");
+        }
+        User user = userService.selectByUsername(username);
+        if (user == null) return new Result(false, "用户异常");
+
+        // 2. 检查是否点过
+        Integer count = commentMapper.countCommentLike(user.getId(), commentId);
+
+        if (count > 0) {
+            // === 取消点赞 ===
+            try {
+                commentMapper.deleteCommentLike(user.getId(), commentId);
+                commentMapper.decreaseLikes(commentId);
+                return new Result(true, "取消点赞");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new Result(false, "操作失败");
+            }
+        } else {
+            // === 点赞 ===
+            try {
+                commentMapper.insertCommentLike(user.getId(), commentId);
+                commentMapper.increaseLikes(commentId);
+                return new Result(true, "点赞成功");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new Result(false, "已点赞");
+            }
+        }
+    }
 
 }

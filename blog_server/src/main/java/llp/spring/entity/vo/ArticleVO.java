@@ -11,4 +11,5 @@ public class ArticleVO {
     private Date created; // 文章创建时间
     private String categories; // 文章分类
     private Integer hits; // 点击量
+    private Integer likes; // 点赞量
 }
