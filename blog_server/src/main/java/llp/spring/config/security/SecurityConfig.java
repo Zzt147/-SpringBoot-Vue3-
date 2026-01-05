@@ -39,59 +39,91 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .cors() // 【新增】开启 Spring Security 的跨域支持
+                .cors() // 开启跨域支持
                 .and()
-                .authorizeRequests();
-        http.authorizeRequests()
-                // 1. 自定义用户访问控制
+                .csrf().disable() // 禁用CSRF，否则POST请求会被拦截
+                .headers().frameOptions().disable() // 防止H2控制台或iframe报错
+                .and()
+
+                .authorizeRequests()
+                // ==========================================
+                // 1. 公开接口 (允许匿名访问，无需登录)
+                // ==========================================
                 .antMatchers(
-                        "/",                  // 【新增】允许访问根路径
-                        "/index.html",        // 【新增】允许访问首页文件
-                        "/assets/**",         // 【新增】允许访问 Vue 打包后的静态资源 (js, css)
-                        "/favicon.ico",       // 【新增】允许访问图标
+                        "/",
+                        "/index.html",
+                        "/assets/**",
+                        "/favicon.ico",
                         "/images/**",
                         "/file/images/**",
-                        // 【修改】下面这些都要加上 /api
+
+                        // 文章公开接口
                         "/api/article/articleSearch",
                         "/api/article/getIndexData1",
                         "/api/article/getAPageOfArticle",
                         "/api/article/getIndexData",
                         "/api/article/getArticleAndFirstPageCommentByArticleId",
                         "/api/article/selectById",
+
+                        // 评论公开接口
                         "/api/comment/getAPageCommentByArticleId",
-                        "/api/user/register",
-                        "/api/user/checkUsername",
-                        "/api/category/**"
+
+                        // 分类公开接口
+                        "/api/category/**",
+
+                        // 用户注册与验证 (关键修改区域)
+                        "/api/user/register",      // 注册接口
+                        "/api/user/checkUsername", // 检查用户名
+                        "/api/user/sendEmailCode"  // ✅【新增】发送验证码接口 (必须放行！)
                 )
-                .permitAll() // 任意访问
+                .permitAll()
+
+                // ==========================================
+                // 2. 管理员权限
+                // ==========================================
                 .antMatchers(
                         "/api/article/deleteById",
                         "/api/article/getAPageOfArticleVO"
                 )
-                .hasRole("admin") // 管理员权限
-                // 20251217新增功能 - 个人中心与浏览足迹
-                // 修改为: 把 /oplog/** 也加进来，允许有角色的人访问
-                .antMatchers("/comment/insert",
+                .hasRole("admin")
+
+                // ==========================================
+                // 3. 登录用户权限 (普通用户 + 管理员)
+                // ==========================================
+                .antMatchers(
+                        "/comment/insert",
                         "/oplog/**",
                         "/reply/**",
                         "/comment/getUserComments",
                         "/user/updateInfo",
                         "/api/article/upload",
-                        "/api/article/publishArticle")
+                        "/api/article/publishArticle"
+                )
+                .hasAnyRole("common", "admin")
 
-                .hasAnyRole("common", "admin") // [建议] 改为 hasAnyRole，这样管理员也能发评论、看日志
-
+                // ==========================================
+                // 4. 其他所有请求都需要认证
+                // ==========================================
                 .anyRequest().authenticated()
+
                 .and()
-                // 2. 自定义用户登录控制
+
+                // ==========================================
+                // 5. 登录配置
+                // ==========================================
                 .formLogin()
-                .loginProcessingUrl("/api/login") // 【新增】指定处理登录请求的URL为 /api/login
-                .failureHandler(myAuthenticationFailureHandler) // 权限验证失败的处理
-                .successHandler(myAuthenticationSuccessHandler) // 权限验证成功的处理
-                .permitAll() // 登录页面所有人可以访问
+                .loginProcessingUrl("/api/login") // 指定处理登录请求的URL
+                .failureHandler(myAuthenticationFailureHandler)
+                .successHandler(myAuthenticationSuccessHandler)
+                .permitAll()
+
                 .and()
-                .logout() // 注销用户
-                .logoutUrl("/api/logout") // 注销网址
+
+                // ==========================================
+                // 6. 登出配置
+                // ==========================================
+                .logout()
+                .logoutUrl("/api/logout")
                 .logoutSuccessHandler(new LogoutSuccessHandler() {
                     @Override
                     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -102,12 +134,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
                                 new Result(true, "登出成功")));
                     }
                 })
-                .permitAll()
-
-                .and()
-                .csrf().disable() // 禁用跨站csrf攻击防御
-                // 防止错误：Refused to display in a frame because it set 'X-Frame-Options' to 'DENY'
-                .headers().frameOptions().disable();
+                .permitAll();
     }
 
     @Override

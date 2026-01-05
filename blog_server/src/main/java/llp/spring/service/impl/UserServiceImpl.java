@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import llp.spring.entity.Authority;
 import llp.spring.entity.User;
 import llp.spring.entity.UserAuthority;
+import llp.spring.mapper.UserAuthorityMapper; // 假设你有这个 Mapper
 import llp.spring.mapper.UserMapper;
 import llp.spring.service.IAuthorityService;
 import llp.spring.service.IUserAuthorityService;
@@ -15,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -34,6 +34,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     // 20251217新增功能 - 个人中心与浏览足迹
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private UserAuthorityMapper userAuthorityMapper; // 用于设置用户权限
 
 
     @Override
@@ -105,28 +108,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Result checkUsername(String username) {
-        Result result = new Result();
-
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getUsername, username);
-        User existingUser = this.getOne(queryWrapper);
-
-        if (existingUser != null) {
-            result.setErrorMessage("用户名已存在");
-        } else {
-            result.setSuccess(true);
-            result.setMsg("用户名可用");
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username);
+        if (userMapper.selectCount(queryWrapper) > 0) {
+            return new Result(false, "用户名已存在");
         }
-
-        return result;
+        return new Result(true, "用户名可用");
     }
 
     // 20251217新增功能 - 个人中心与浏览足迹
     // --- 实现接口定义的方法 ---
     @Override
     public User selectByUsername(String username) {
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        wrapper.eq("username", username);
-        return userMapper.selectOne(wrapper);
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username);
+        return userMapper.selectOne(queryWrapper);
     }
 }

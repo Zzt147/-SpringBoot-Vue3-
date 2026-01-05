@@ -1,6 +1,8 @@
 package llp.spring.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import llp.spring.entity.*;
 import llp.spring.mapper.ArticleMapper;
+import llp.spring.mapper.TagMapper;
 import llp.spring.tools.ArticleSearch;
 import llp.spring.tools.PageParams;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,14 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import llp.spring.service.ArticleService;
-import llp.spring.entity.Article;
 import llp.spring.tools.Result;
 import org.springframework.web.multipart.MultipartFile;
 
 // 20251217新增功能 - 个人中心与浏览足迹
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import llp.spring.entity.User; // 引入你的 User 实体
 import llp.spring.service.IUserService; // 引入 UserService
 import llp.spring.service.IOpLogService;
 
@@ -37,6 +37,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import llp.spring.entity.vo.ArticleVO;
 
@@ -59,6 +60,9 @@ public class ArticleController {
     // === 👇👇👇 添加这部分代码 👇👇👇 ===
     @Autowired
     private ArticleMapper articleMapper;
+
+    @Autowired
+    private TagMapper tagMapper; // 注入
 
     // 方法1：主页打开时或从文章返回主页时调用
     @PostMapping("/getIndexData1")
@@ -272,36 +276,22 @@ public class ArticleController {
     }
 
     // 【新增】获取所有标签（用于标签云）
+// 【修改】获取所有标签 (改为获取 Top 20 热门标签)
     @GetMapping("/getAllTags")
     public Result getAllTags() {
         Result result = new Result();
-        try {
-            // 1. 查询所有文章的标签字段
-            // 这里的 QueryWrapper 应该引入 com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
-            List<Article> list = articleService.list(new QueryWrapper<Article>().select("tags"));
+        // 直接从 t_tag 和 t_article_tag 统计
+        List<Tag> hotTags = tagMapper.getHotTags(20);
 
-            // 2. 解析并去重
-            Set<String> tagSet = new HashSet<>();
-            for (Article article : list) {
-                String tags = article.getTags();
-                if (tags != null && !tags.isEmpty()) {
-                    // 兼容中文逗号
-                    String[] splitTags = tags.replace("，", ",").split(",");
-                    for (String t : splitTags) {
-                        if (!t.trim().isEmpty()) {
-                            tagSet.add(t.trim());
-                        }
-                    }
-                }
-            }
+        // 为了兼容前端，转换成 List<String>
+        List<String> tagNames = hotTags.stream().map(Tag::getName).collect(Collectors.toList());
 
-            // 3. 返回结果
-            result.getMap().put("tags", tagSet);
-            result.setSuccess(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            result.setErrorMessage("获取标签失败");
-        }
+        result.getMap().put("tags", tagNames);
+
+        // 也可以返回带数量的对象给前端 (仪表盘用)
+        result.getMap().put("tagObjs", hotTags);
+
+        result.setSuccess(true);
         return result;
     }
 

@@ -8,24 +8,50 @@ server:
   tomcat:
     uri-encoding: UTF-8
 
+# Spring 核心配置 (所有 spring 开头的配置都放在这里面)
 spring:
+  # 1. 激活的配置文件
   profiles:
-    active: jdbc, redis  # 同时激活 jdbc 和 redis 配置
-  # 解决静态资源映射问题（Spring Boot 2.6+ 需要）
+    active: jdbc, redis
+
+  # 2. MVC 配置 (解决 Spring Boot 2.6+ 路径匹配问题)
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
 
+  # 3. 邮件服务器配置 (已修正为 YAML 格式)
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: 2765309445@qq.com
+    # 👇 你的授权码
+    password: crjtfyyrvnygddbh
+    protocol: smtp
+    default-encoding: UTF-8
+    # SMTP 详细属性配置
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            enable: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            port: 465
+            fallback: false
+
+# MyBatis Plus 配置
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   mapper-locations: classpath*:/mapper/*.xml
 
-# ... 上面的内容保持不变 ...
-
 # 自定义文件上传路径
 file:
   upload-images-dir: E:\img\images\
-  # [新增] 新的头像/文件上传保存路径 (注意最后带上斜杠)
+  # [新增] 新的头像/文件上传保存路径
   upload-avatar-dir: D:\my_blog_upload\
   article-img-dir: E:\img\article_img\

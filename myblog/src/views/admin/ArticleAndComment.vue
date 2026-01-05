@@ -275,8 +275,8 @@ function submit() {
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
         <h3 style="margin: 0; color: #333;">评论区</h3>
         <el-radio-group v-model="pageParams.sort" size="small" @change="handleCommentSortChange">
-          <el-radio-button label="new">最新</el-radio-button>
-          <el-radio-button label="hot">最热</el-radio-button>
+          <el-radio-button value="new">最新</el-radio-button>
+          <el-radio-button value="hot">最热</el-radio-button>
         </el-radio-group>
       </div>
 

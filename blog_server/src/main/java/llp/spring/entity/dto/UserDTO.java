@@ -30,4 +30,10 @@ public class UserDTO {
         BeanUtils.copyProperties(entity, dto);
         return dto;
     }
+
+    // 【新增】验证码字段
+    private String code;
+
+    // 👇👇👇【核心修复】必须加上密码字段，否则注册时接收不到密码！
+    private String password;
 }

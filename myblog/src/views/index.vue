@@ -229,8 +229,8 @@ const disabled = computed(() => loading.value || noMore.value)
 
         <el-radio-group v-model="data.pageParams.sort" size="small" @change="handleSortChange"
           :style="currentTag ? 'margin-right: 15px;' : 'margin-left: auto; margin-right: 15px;'">
-          <el-radio-button label="new">最新</el-radio-button>
-          <el-radio-button label="hot">最热</el-radio-button>
+          <el-radio-button value="new">最新</el-radio-button>
+          <el-radio-button value="hot">最热</el-radio-button>
         </el-radio-group>
 
         <span class="mode-label">阅读模式：</span>

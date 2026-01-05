@@ -188,12 +188,13 @@ function publishArticle() {
     article.categories = "默认分类"
   }
 
+  // 3. 【关键修改】删除原来的标签处理逻辑
+  // 让后端去解析用户输入的原始字符串，不管是 "#Hong Kong" 还是 "Java, Spring"
+  // 如果你需要这里做一点简单的清洗（比如把中文逗号转英文），可以用下面这一行，否则直接什么都不写也可以
   if (article.tags) {
-    let tempTags = article.tags.replace(/，/g, ' ').replace(/,/g, ' ').trim()
-    let tagList = tempTags.split(/\s+/)
-    article.tags = tagList.map(tag => tag.startsWith('#') ? tag : '#' + tag).join(' ')
+    // 可选：仅把中文逗号转为英文逗号，但不做分割和加#操作
+    article.tags = article.tags.replace(/，/g, ',').trim();
   }
-
   axios({
     method: 'post',
     url: '/api/article/publishArticle?type=' + type,

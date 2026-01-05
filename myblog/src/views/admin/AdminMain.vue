@@ -93,38 +93,42 @@ function toExit() {
         <el-col>
           <el-menu router active-text-color="white" background-color="#545c64" text-color="#fff"
             :collapse="aside_state.collapse" :collapse-transition="false">
-            <el-menu-item @click="toDashboard">
+            <el-menu-item index="dashboard" @click="toDashboard">
               <el-icon>
                 <Odometer />
               </el-icon>
               <span>仪表盘</span>
             </el-menu-item>
-            <el-menu-item @click="toPublishArticle">
+
+            <el-menu-item index="publish" @click="toPublishArticle">
               <el-icon>
                 <Edit />
               </el-icon>
               <span>发布文章</span>
             </el-menu-item>
-            <el-menu-item @click="toArticleManage">
+
+            <el-menu-item index="article-manage" @click="toArticleManage">
               <el-icon>
                 <Memo />
               </el-icon>
               <span>文章管理</span>
             </el-menu-item>
-            <!--评论管理功能-->
-            <el-menu-item @click="toManageComment">
+
+            <el-menu-item index="comment-manage" @click="toManageComment">
               <el-icon>
                 <ChatDotSquare />
               </el-icon>
               <span>评论管理</span>
             </el-menu-item>
-            <el-menu-item @click="toManageCategory">
+
+            <el-menu-item index="category-manage" @click="toManageCategory">
               <el-icon>
                 <Filter />
               </el-icon>
               <span>标签分类</span>
             </el-menu-item>
-            <el-menu-item @click="toSystemSettings">
+
+            <el-menu-item index="settings" @click="toSystemSettings">
               <el-icon>
                 <Setting />
               </el-icon>
