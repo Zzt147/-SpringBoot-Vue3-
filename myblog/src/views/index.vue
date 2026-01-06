@@ -387,4 +387,13 @@ fieldset {
   display: flex;
   justify-content: center;
 }
+
+/* 【新增】：侧边栏粘性定位样式 */
+.sidebar-sticky {
+  position: sticky;
+  position: -webkit-sticky;
+  /* 兼容 Safari */
+  top: 80px;
+  /* 距离顶部的偏移量。因为顶部有导航栏，建议设置 70px-90px 左右 */
+}
 </style>

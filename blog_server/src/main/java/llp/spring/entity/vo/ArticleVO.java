@@ -12,4 +12,7 @@ public class ArticleVO {
     private String categories; // 文章分类
     private Integer hits; // 点击量
     private Integer likes; // 点赞量
+    // === 新增字段 ===
+    private Integer readRankChange; // 阅读排名变化值
+    private Integer likeRankChange; // 点赞排名变化值
 }

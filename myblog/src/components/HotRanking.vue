@@ -1,6 +1,8 @@
 <script setup>
 import { defineProps, inject, ref } from 'vue'
-import { Trophy, StarFilled, View } from '@element-plus/icons-vue'
+// 【新增】引入 Top, Bottom, Minus 图标
+import { Trophy, StarFilled, View, Top, Bottom, Minus } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router' // 如果需要跳转
 
 // 接收两个列表数据
 const props = defineProps({
@@ -38,17 +40,45 @@ function gotoArticle(article) {
 
         <div class="content" @click="gotoArticle(article)">
           <div class="title" :title="article.title">{{ article.title }}</div>
-          <div class="meta">
-            <template v-if="currentTab === 'read'">
-              <el-icon>
-                <View />
-              </el-icon> {{ article.hits || 0 }}
-            </template>
-            <template v-else>
-              <el-icon>
-                <StarFilled />
-              </el-icon> {{ article.likes || 0 }}
-            </template>
+
+          <div class="meta-group">
+            <div class="rank-change">
+              <template v-if="currentTab === 'read'">
+                <el-icon v-if="article.readRankChange > 0" color="#67C23A">
+                  <Top />
+                </el-icon>
+                <el-icon v-else-if="article.readRankChange < 0" color="#F56C6C">
+                  <Bottom />
+                </el-icon>
+                <el-icon v-else color="#909399">
+                  <Minus />
+                </el-icon>
+              </template>
+              <template v-else>
+                <el-icon v-if="article.likeRankChange > 0" color="#67C23A">
+                  <Top />
+                </el-icon>
+                <el-icon v-else-if="article.likeRankChange < 0" color="#F56C6C">
+                  <Bottom />
+                </el-icon>
+                <el-icon v-else color="#909399">
+                  <Minus />
+                </el-icon>
+              </template>
+            </div>
+
+            <div class="meta">
+              <template v-if="currentTab === 'read'">
+                <el-icon>
+                  <View />
+                </el-icon> {{ article.hits || 0 }}
+              </template>
+              <template v-else>
+                <el-icon>
+                  <StarFilled />
+                </el-icon> {{ article.likes || 0 }}
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -162,5 +192,32 @@ function gotoArticle(article) {
   color: #999;
   padding: 20px 0;
   font-size: 13px;
+}
+
+/* 【新增/修改】元数据组样式 */
+.meta-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 排名变化图标和数值之间的间距 */
+}
+
+/* 【新增】加载更多样式 */
+.load-more {
+  text-align: center;
+  font-size: 13px;
+  color: #909399;
+  padding-top: 10px;
+  border-top: 1px dashed #eee;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.load-more:hover {
+  color: #409EFF;
 }
 </style>

@@ -42,4 +42,10 @@ public class Statistic implements Serializable {
 
     // === 【新增】点赞字段 ===
     private Integer likes;
+
+    // 在原有字段基础上添加
+    private Integer prevReadRank;
+    private Integer readRankChange;
+    private Integer prevLikeRank;
+    private Integer likeRankChange;
 }

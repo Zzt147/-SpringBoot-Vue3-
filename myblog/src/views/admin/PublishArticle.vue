@@ -188,13 +188,11 @@ function publishArticle() {
     article.categories = "默认分类"
   }
 
-  // 3. 【关键修改】删除原来的标签处理逻辑
-  // 让后端去解析用户输入的原始字符串，不管是 "#Hong Kong" 还是 "Java, Spring"
-  // 如果你需要这里做一点简单的清洗（比如把中文逗号转英文），可以用下面这一行，否则直接什么都不写也可以
+  // 标签格式化 (这行代码修改了 article，会触发一次 watch，启动一个 5秒 的定时器)
   if (article.tags) {
-    // 可选：仅把中文逗号转为英文逗号，但不做分割和加#操作
     article.tags = article.tags.replace(/，/g, ',').trim();
   }
+
   axios({
     method: 'post',
     url: '/api/article/publishArticle?type=' + type,
@@ -203,10 +201,36 @@ function publishArticle() {
   }).then((response) => {
     ElMessageBox.alert(response.data, '结果')
     if ("添加成功！" == response.data || "修改成功！" == response.data) {
-      // === 【新增】发布成功，清除草稿 ===
+
+      // === 【核心修复代码 START】 ===
+
+      // 1. 立即杀死当前所有 pending 的定时器
+      // (防止上面 "标签格式化" 触发的定时器在 5秒后 复活草稿)
+      if (draftTimer) {
+        clearTimeout(draftTimer)
+        draftTimer = null
+      }
+
+      // 2. 清除物理缓存
       localStorage.removeItem(DRAFT_KEY)
-      // ==============================
+
+      // 3. 清空数据
+      // (注意：clearData 会修改 article 属性，这会【再次】触发 watch 并启动【新】的定时器！)
       clearData()
+
+      // 4. 赶在新的定时器生效前，再次将其扼杀
+      // 使用 nextTick 确保我们是在 clearData 触发的 watch 执行之后运行
+      nextTick(() => {
+        if (draftTimer) {
+          clearTimeout(draftTimer)
+          draftTimer = null
+        }
+        // 双重保险：再次确保 localStorage 是干净的
+        localStorage.removeItem(DRAFT_KEY)
+      })
+
+      // === 【核心修复代码 END】 ===
+
       window.scrollTo(0, 0)
     }
   }).catch((error) => {
@@ -323,6 +347,28 @@ onMounted(() => {
     })
   }
 })
+
+// 新增一个标志位，表示是否正在发布或已完成发布
+const isSubmitting = ref(false)
+
+// 自动保存草稿
+let autoSaveTimer = null
+const autoSaveDraft = () => {
+  // 【修复1】如果正在提交或已发布成功，绝对不要保存草稿
+  if (isSubmitting.value) return
+
+  // 只有当有内容时才保存
+  if (article.title || article.content || article.tags) {
+    // ... 原有保存逻辑
+    const draft = {
+      ...article,
+      dynamicTags: dynamicTags.value,
+      dynamicCategories: dynamicCategories.value,
+      timestamp: new Date().getTime()
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+  }
+}
 </script>
 
 <template>

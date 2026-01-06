@@ -42,6 +42,9 @@ import java.util.regex.Pattern;
 import llp.spring.entity.Tag;
 import llp.spring.mapper.TagMapper;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import llp.spring.entity.Comment;
+
 @Service
 @Transactional
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements ArticleService {
@@ -280,6 +283,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         result.getMap().put("comments",
                 commentMapper.getAPageCommentByArticleId(
                         articleId, (int) ((pageParams.getPage() - 1) * pageParams.getRows()), (int) pageParams.getRows()));
+
+        Long total = commentMapper.selectCount(new QueryWrapper<Comment>().eq("article_id", articleId));
+        result.getMap().put("total", total);
 
         // 更新点击量
         Statistic statistic = statisticMapper.selectByArticleId(articleId);

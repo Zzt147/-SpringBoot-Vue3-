@@ -40,6 +40,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         Page<Comment> aPage = commentMapper.selectPage(page, wrapper);   //按条件进行分页查询
         Result result=new Result();    //selectPage是继承的方法，可直接使用
         result.getMap().put("comments", aPage.getRecords());
+
+        // === 【修复】放入总条数 ===
+        result.getMap().put("total", aPage.getTotal());
+        // aPage.getTotal() 是 MyBatis Plus 分页插件自动查询出来的总数，直接用即可
+        
         return result;
     }
 

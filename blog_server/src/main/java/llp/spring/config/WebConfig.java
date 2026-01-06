@@ -13,6 +13,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import org.springframework.beans.factory.annotation.Value; // 引入 Value
+
 @Configuration // Spring的配置注释
 public class WebConfig implements WebMvcConfigurer {
     // 1. 注入配置文件中的路径

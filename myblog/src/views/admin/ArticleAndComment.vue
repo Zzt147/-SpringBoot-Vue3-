@@ -37,6 +37,9 @@ const canComment = ref(false)
 const lightboxVisible = ref(false)
 const lightboxImageSrc = ref('')
 
+// === 1. 新增一个响应式变量存总数 ===
+const commentTotal = ref(0) // 记录评论总数
+
 // === 文章点赞逻辑 ===
 function likeArticle() {
   if (!store.user.user) {
@@ -84,7 +87,8 @@ watch(() => store.user.user, (newUser) => {
 }, { immediate: true })
 
 function updateCommentPermission(user) {
-  if (user && user.authorities && user.authorities[0] == "ROLE_common") {
+  // ✅ 修复：只要用户对象存在且有 ID，就视为已登录，允许显示评论框
+  if (user && user.id) {
     canComment.value = true
   } else {
     canComment.value = false
@@ -132,6 +136,14 @@ function loadArticleAndComments() {
 
         articleAndComment.comments = response.data.map.comments || []
 
+        // 【修复】获取后端返回的总数
+        // 如果后端没返回 total (兼容旧代码)，就暂时用当前长度兜底
+        if (response.data.map.total !== undefined) {
+          commentTotal.value = response.data.map.total
+        } else {
+          commentTotal.value = articleAndComment.comments.length
+        }
+
         if (!response.data.map.comments || response.data.map.comments.length < pageParams.rows) {
           noMore.value = true;
         }
@@ -171,8 +183,12 @@ const load = () => {
       let comments = response.data.map.comments
       if (comments && comments.length > 0) {
         articleAndComment.comments.push(...comments)
-      } else {
-        noMore.value = true
+
+        // 【修复】加载更多时也更新总数（防止有人新发评论）
+        if (response.data.map.total !== undefined) {
+          commentTotal.value = response.data.map.total
+        }
+
       }
     } else {
       ElMessageBox.alert(response.data.msg, '结果')
@@ -219,6 +235,8 @@ function submit() {
       const newComment = response.data.map.Comment || response.data.map.comment
       if (newComment) {
         articleAndComment.comments.unshift(newComment)
+        // 【修复】发表成功，总数 +1
+        commentTotal.value++
       } else {
         pageParams.page = 1
         pageParams.sort = 'new'
@@ -317,7 +335,8 @@ function submit() {
 
         <li v-for="(comment, index) in validComments" :key="comment.id" :id="'comment-' + comment.id"
           class="infinite-list-item">
-          <Comment :comment="comment" :floor="validComments.length - index"></Comment>
+          <Comment :comment="comment" :floor="pageParams.sort === 'new' ? (commentTotal - index) : (index + 1)">
+          </Comment>
         </li>
 
       </ul>
