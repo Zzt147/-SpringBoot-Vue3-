@@ -2,13 +2,12 @@
 import Top from '@/components/Top.vue';
 import Comment from '@/components/Comment.vue';
 import { useRoute } from 'vue-router';
-import { inject, reactive } from 'vue';
+import { inject, reactive, nextTick } from 'vue'; // ✅ 引入 nextTick
 import { ElMessageBox, ElMessage } from 'element-plus';
 import { ref, computed, onMounted, watch } from 'vue'
 import { useStore } from '@/stores/my'
 import { marked } from 'marked'
 import { LocationInformation, Close, StarFilled } from '@element-plus/icons-vue'
-
 
 const route = useRoute();
 const axios = inject('axios');
@@ -20,11 +19,11 @@ let articleAndComment = reactive({
   "comments": []
 });
 
-// 【修改】pageParams 改为 reactive，支持 sort 参数
+// pageParams
 let pageParams = reactive({
   "page": 1,
   "rows": 5,
-  "sort": "new" // 默认为最新评论
+  "sort": "new"
 })
 
 const noMore = ref(false)
@@ -48,7 +47,6 @@ function likeArticle() {
   axios.post('/api/statistic/likeArticle?articleId=' + articleAndComment.article.id)
     .then(res => {
       if (res.data.success) {
-        // 确保初始化
         if (!articleAndComment.article.likes) articleAndComment.article.likes = 0;
 
         if (res.data.msg === "点赞成功") {
@@ -97,6 +95,28 @@ onMounted(() => {
   loadArticleAndComments()
 })
 
+// ✅【新增】滚动到指定评论的核心函数
+function scrollToTargetComment() {
+  const targetId = route.query.targetId;
+  if (targetId) {
+    nextTick(() => {
+      // 尝试找到对应ID的元素
+      const element = document.getElementById(`comment-${targetId}`);
+      if (element) {
+        // 平滑滚动到该元素
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // 可选：添加一个高亮动画效果，提示用户是这条
+        element.style.transition = "background-color 0.5s";
+        element.style.backgroundColor = "#fff8e1"; // 浅黄色高亮
+        setTimeout(() => {
+          element.style.backgroundColor = "#fff";
+        }, 2000);
+      }
+    });
+  }
+}
+
 function loadArticleAndComments() {
   axios({
     method: 'post',
@@ -105,10 +125,7 @@ function loadArticleAndComments() {
   }).then((response) => {
     if (response.data.success) {
       if (response.data.map.article != null) {
-        // 后端现在会返回带有 likes 的 article 对象
         articleAndComment.article = response.data.map.article
-
-        // 【保险起见】如果后端返回 null，强制设为 0，防止前端 NaN
         if (articleAndComment.article.likes == null) {
           articleAndComment.article.likes = 0;
         }
@@ -118,6 +135,10 @@ function loadArticleAndComments() {
         if (!response.data.map.comments || response.data.map.comments.length < pageParams.rows) {
           noMore.value = true;
         }
+
+        // ✅【新增】数据加载完成后，尝试滚动到指定评论
+        scrollToTargetComment();
+
       } else {
         ElMessageBox.alert("无文章！", '结果')
       }
@@ -163,13 +184,11 @@ const load = () => {
   })
 }
 
-// === 【新增】评论排序切换 ===
 function handleCommentSortChange(val) {
-  // sort 已由 v-model 更新
-  pageParams.page = 0 // 重置页码 (因为 load 里面会 ++，所以这里设为 0)
-  articleAndComment.comments = [] // 清空旧数据
+  pageParams.page = 0
+  articleAndComment.comments = []
   noMore.value = false
-  load() // 重新加载
+  load()
 }
 
 // 提交评论
@@ -197,15 +216,12 @@ function submit() {
       ElMessage.success("评论成功")
       commentContent.value = ""
 
-      // 如果当前是按“最热”排序，新评论可能排在最后，所以体验上最好切回“最新”或者直接插入头部
-      // 这里为了简单，直接插入头部，不强制切换排序
       const newComment = response.data.map.Comment || response.data.map.comment
       if (newComment) {
         articleAndComment.comments.unshift(newComment)
       } else {
-        // 如果后端没返回对象，就刷新列表
         pageParams.page = 1
-        pageParams.sort = 'new' // 强制切回最新
+        pageParams.sort = 'new'
         noMore.value = false
         articleAndComment.comments = []
         loadArticleAndComments()
@@ -299,7 +315,8 @@ function submit() {
           </el-row>
         </li>
 
-        <li v-for="(comment, index) in validComments" :key="comment.id" class="infinite-list-item">
+        <li v-for="(comment, index) in validComments" :key="comment.id" :id="'comment-' + comment.id"
+          class="infinite-list-item">
           <Comment :comment="comment" :floor="validComments.length - index"></Comment>
         </li>
 

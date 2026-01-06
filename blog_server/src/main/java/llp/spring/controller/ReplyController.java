@@ -1,17 +1,15 @@
-// 20251217新增功能
-
 package llp.spring.controller;
 
+import llp.spring.entity.Comment; // 引入 Comment
 import llp.spring.entity.Reply;
+import llp.spring.mapper.CommentMapper; // 引入 CommentMapper
 import llp.spring.mapper.ReplyMapper;
 import llp.spring.tools.IpUtils;
 import llp.spring.tools.Result;
-import llp.spring.tools.Tools;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 // 20251216新增功能 - 修改用户名为真实用户名
@@ -26,6 +24,10 @@ public class ReplyController {
 
     @Autowired
     private ReplyMapper replyMapper;
+
+    // === 👇👇👇 新增注入 CommentMapper 👇👇👇 ===
+    @Autowired
+    private CommentMapper commentMapper;
 
     // 添加回复
     @PostMapping("/insert")
@@ -44,11 +46,20 @@ public class ReplyController {
 
             reply.setCreated(LocalDateTime.now());
 
-            // 【新增代码开始】 ===
+            // 设置IP和属地
             String ip = IpUtils.getIpAddr(request);
             reply.setIp(ip);
-            reply.setLocation(IpUtils.getCityInfo(ip)); // 设置属地
-            // 【新增代码结束】 ===
+            reply.setLocation(IpUtils.getCityInfo(ip));
+
+            // === 👇👇👇 核心补全逻辑 START 👇👇👇 ===
+            // 为了让通知切面(Aspect)能拿到文章ID，如果前端没传，我们这里手动查一下
+            if (reply.getArticleId() == null && reply.getCommentId() != null) {
+                Comment comment = commentMapper.selectById(reply.getCommentId());
+                if (comment != null) {
+                    reply.setArticleId(comment.getArticleId());
+                }
+            }
+            // === 核心补全逻辑 END ===
 
             replyMapper.insert(reply);
             result.getMap().put("reply", reply);
@@ -78,12 +89,11 @@ public class ReplyController {
         return result;
     }
 
-    // 【新增】删除回复接口
+    // 删除回复接口
     @PostMapping("/deleteById")
     public Result deleteById(Integer id) {
         Result result = new Result();
         try {
-            // 直接调用 Mapper 删除
             int count = replyMapper.deleteById(id);
             if (count > 0) {
                 result.setMsg("删除成功!");

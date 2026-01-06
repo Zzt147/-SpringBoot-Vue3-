@@ -37,6 +37,9 @@ public class NotificationAspect {
         if (args.length > 0 && args[0] instanceof Comment) {
             Comment comment = (Comment) args[0];
 
+            // 注意：因为是 AfterReturning，如果 comment 没有 ID (插入失败)，这里其实应该检查 result
+            // 但通常 MyBatis-Plus 插入后回填 ID 到实体对象中，所以直接用 comment.getId() 是可以的
+
             // 获取当前登录用户 (发送者)
             User sender = getCurrentUser();
             if (sender == null) return;
@@ -44,7 +47,7 @@ public class NotificationAspect {
             // 获取文章作者 (接收者)
             Article article = articleService.getById(comment.getArticleId());
             if (article == null) return;
-            Integer receiverId = article.getUserId(); // 假设 Article 实体里存了 userId
+            Integer receiverId = article.getUserId();
 
             // 自己评论自己不发通知
             if (sender.getId().equals(receiverId)) return;
@@ -55,6 +58,10 @@ public class NotificationAspect {
             notification.setSenderName(sender.getUsername());
             notification.setReceiverId(receiverId);
             notification.setArticleId(article.getId());
+
+            // ✅【新增】保存评论ID，用于前端跳转定位
+            notification.setCommentId(comment.getId());
+
             notification.setType("COMMENT");
             notification.setContent("评论了你的文章: " + truncate(comment.getContent()));
             notification.setIsRead(false);
@@ -80,15 +87,22 @@ public class NotificationAspect {
 
             if (sender.getId().equals(receiverId)) return;
 
-            // 注意：Reply 对象里可能暂时没有 articleId，需要根据 commentId 去查，或者前端传
-            // 为了简单，我们只通知 "收到一条新回复"，或者在 ReplyController 插入时前端把 articleId 也传进来
-            // 这里假设 Reply 暂时不方便获取 ArticleId，设为 null 或者你在 Reply 实体加个字段
-
             Notification notification = new Notification();
             notification.setSenderId(sender.getId());
             notification.setSenderName(sender.getUsername());
             notification.setReceiverId(receiverId);
-            // notification.setArticleId(...); // 如果能获取最好
+
+            // 【新增】如果是回复，我们通常跳转到它所属的“根评论”位置，让用户看到上下文
+            // 假设 Reply 对象里有 commentId (根评论ID)。如果没有，你需要去 Reply 实体类确认一下
+            if (reply.getCommentId() != null) {
+                notification.setCommentId(reply.getCommentId());
+                // 同时，为了让前端能跳转到文章页，这里最好也设置 ArticleId
+                // 如果 Reply 实体里没有 articleId，建议在 ReplyController 里查一下并 set 进去
+                // 这里暂时假设 notification 不需要 articleId 也能存，但在跳转时 articleId 是必须的
+                // 建议：确保 Reply 插入时顺便把 articleId 查出来传给 notification，或者 Reply 实体本身就有 articleId
+                notification.setArticleId(reply.getArticleId()); // 假设 Reply 有这个字段
+            }
+
             notification.setType("REPLY");
             notification.setContent("回复了你的评论: " + truncate(reply.getContent()));
             notification.setIsRead(false);

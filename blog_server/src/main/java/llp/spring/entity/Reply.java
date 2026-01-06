@@ -1,5 +1,3 @@
-// 20251217新增功能
-
 package llp.spring.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -10,11 +8,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDate;
-
 // 20251217新增功能 - 修改DATE为DATETIME
 import java.time.LocalDateTime;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @TableName("t_reply")
@@ -50,19 +45,23 @@ public class Reply implements Serializable {
     @TableField(exist = false)
     private String avatar;
 
-
     // 【新增】关联的用户id (关键修改)
     @TableField("user_id")
     private Integer userId;
 
-    // 在类中添加这两个字段
+    // === 新增 articleId 字段 (用于通知跳转)  ===
+    // 注意：这里加了 exist = false，表示不用去改 t_reply 数据库表
+    // 它的作用仅仅是把 ArticleId 从 Controller 传给 NotificationAspect
+    @TableField(exist = false)
+    private Integer articleId;
+
     /**
      * 回复人IP
      */
-    private String ip; // 【新增】
+    private String ip;
 
     /**
      * IP属地
      */
-    private String location; // 【新增】
+    private String location;
 }

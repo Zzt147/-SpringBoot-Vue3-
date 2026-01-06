@@ -54,6 +54,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
                         "/index.html",
                         "/assets/**",
                         "/favicon.ico",
+                        "/api/images/**",      // 图片
+                        "/api/article_img/**", // 文章图片
                         "/images/**",
                         "/file/images/**",
 
@@ -65,16 +67,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
                         "/api/article/getArticleAndFirstPageCommentByArticleId",
                         "/api/article/selectById",
 
+                        // --- 修复开始：添加标签云和点赞榜接口 ---
+                        "/api/article/getAllTags",      // ✅ 标签云接口
+                        "/api/article/getLikeRanking",  // ✅ 点赞榜接口
+                        // --- 修复结束 ---
+
                         // 评论公开接口
                         "/api/comment/getAPageCommentByArticleId",
 
                         // 分类公开接口
                         "/api/category/**",
 
-                        // 用户注册与验证 (关键修改区域)
+                        // 用户注册与验证
                         "/api/user/register",      // 注册接口
                         "/api/user/checkUsername", // 检查用户名
-                        "/api/user/sendEmailCode"  // ✅【新增】发送验证码接口 (必须放行！)
+                        "/api/user/sendEmailCode"  // 发送验证码接口
                 )
                 .permitAll()
 
@@ -112,7 +119,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
                 // 5. 登录配置
                 // ==========================================
                 .formLogin()
-                .loginProcessingUrl("/api/login") // 指定处理登录请求的URL
+                .loginProcessingUrl("/api/login")
                 .failureHandler(myAuthenticationFailureHandler)
                 .successHandler(myAuthenticationSuccessHandler)
                 .permitAll()

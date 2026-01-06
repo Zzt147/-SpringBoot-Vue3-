@@ -24,6 +24,7 @@ public class Notification implements Serializable {
     private String content;        // 内容
     private String type;           // 类型：COMMENT, REPLY
     private Boolean isRead;        // 是否已读
+    private Integer commentId;      // 关联的评论ID (用于跳转锚点)
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime created;

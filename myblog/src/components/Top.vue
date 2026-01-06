@@ -53,6 +53,22 @@ function markAllRead() {
   })
 }
 
+// === ✅【新增】点击通知跳转 ===
+function readNotification(item) {
+  // 1. 如果有 commentId，说明后端已经支持精准定位
+  const targetId = item.commentId;
+
+  // 2. 跳转到文章详情页，并携带 targetId 参数
+  // 即使 targetId 为 null，也会正常跳转到文章页顶部
+  router.push({
+    path: `/article_comment/${item.articleId}`,
+    query: { targetId: targetId }
+  });
+
+  // 3. (可选) 这里可以顺便调用接口把该条设为已读，或者依靠用户查看列表时已经获取最新状态
+  // item.isRead = true; 
+}
+
 // === 新增：定时轮询未读数 (可选，比如每30秒查一次) ===
 let timer = null
 onMounted(() => {
@@ -115,7 +131,8 @@ function goToLogin() {
             <el-divider style="margin: 10px 0" />
             <div v-if="notificationList.length === 0" style="text-align: center; color: #999;">暂无消息</div>
             <ul v-else class="msg-list">
-              <li v-for="item in notificationList" :key="item.id" :class="{ unread: !item.isRead }">
+              <li v-for="item in notificationList" :key="item.id" :class="{ unread: !item.isRead }"
+                @click="readNotification(item)">
                 <div class="msg-title">
                   <el-tag size="small" :type="item.type === 'COMMENT' ? 'success' : 'warning'">
                     {{ item.type === 'COMMENT' ? '评论' : '回复' }}
@@ -145,13 +162,11 @@ function goToLogin() {
 
 <style scoped>
 * {
-  /* background: #5f9ea0; 注意：Top.vue原本的这个样式可能会影响popover，建议只针对.top设置背景 */
   font-size: 16px;
 }
 
 .top {
   background: #5f9ea0;
-  /* 移到这里 */
   height: 80px;
   color: #fff;
 }
@@ -169,7 +184,6 @@ a:hover {
 
 .searchIcon {
   color: white;
-  /* 修改颜色以适应深色背景 */
 }
 
 .searchIcon:hover {
@@ -190,9 +204,16 @@ a:hover {
   overflow-y: auto;
 }
 
+/* ✅【修改】增加鼠标手势和悬停效果 */
 .msg-list li {
   padding: 10px 0;
   border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.msg-list li:hover {
+  background-color: #f5f7fa;
 }
 
 .msg-list li.unread .msg-content {
