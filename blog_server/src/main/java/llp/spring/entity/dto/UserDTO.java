@@ -36,4 +36,7 @@ public class UserDTO {
 
     // 👇👇👇【核心修复】必须加上密码字段，否则注册时接收不到密码！
     private String password;
+
+    // === 【新增修复】添加 avatar 字段，否则无法接收头像 ===
+    private String avatar;
 }

@@ -1,5 +1,6 @@
 package llp.spring.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import llp.spring.entity.Article;
 import llp.spring.entity.Comment;
 // 20251217新增功能
 import llp.spring.entity.Reply;
@@ -8,10 +9,7 @@ import llp.spring.tools.IpUtils;
 import llp.spring.tools.PageParams;
 import llp.spring.tools.Tools;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import llp.spring.tools.Result;
 import llp.spring.service.ICommentService;
 
@@ -34,6 +32,7 @@ import llp.spring.entity.vo.UserCommentVO;
 import llp.spring.entity.User;
 import llp.spring.service.IOpLogService;
 import llp.spring.service.IUserService;
+import llp.spring.service.ArticleService;
 
 import llp.spring.service.IReplyService;
 
@@ -54,6 +53,10 @@ public class CommentController {
     // 注意：你的 Service 接口名通常以 I 开头，如果是 ReplyService 请自行修改
     @Autowired
     private IReplyService replyService;
+
+    // 【新增】需要注入 ArticleService 来获取文章标题
+    @Autowired
+    private ArticleService articleService;
 
     @PostMapping("/getAPageCommentByArticleId")
     public Result getAPageCommentByArticleId(Integer articleId, @RequestBody PageParams pageParams){
@@ -111,7 +114,7 @@ public class CommentController {
     // 评论管理功能
     // --- 修改：获取所有评论（管理员） ---
     // --- 修改：获取所有评论（管理员） ---
-// --- 【修改后】管理员获取所有评论接口 ---
+    // --- 【修改后】管理员获取所有评论接口 ---
     @PostMapping("/getAdminPage")
     public Result getAdminPage(@RequestBody PageParams pageParams) {
         Result result = new Result();
@@ -171,14 +174,94 @@ public class CommentController {
     }
 
     // 在 CommentController 中添加
+    /**
+     * 【重写】获取我的评论与回复，并带上文章标题或被回复人信息
+     */
     @PostMapping("/getMyComments")
-    public Result getMyComments(String username) { // 直接传用户名查
+    public Result getMyComments(@RequestParam String username) {
         Result result = new Result();
         try {
-            QueryWrapper<Comment> wrapper = new QueryWrapper<>();
-            wrapper.eq("author", username).orderByDesc("created");
-            List<Comment> list = commentService.list(wrapper);
+            User user = userService.selectByUsername(username);
+            if (user == null) return new Result(false, "用户不存在");
+
+            List<Map<String, Object>> list = new ArrayList<>();
+
+            // 1. 获取我的所有主评论
+            QueryWrapper<Comment> commentWrapper = new QueryWrapper<>();
+            commentWrapper.eq("author", username); // 注意：评论表存的是author(用户名)
+            List<Comment> myComments = commentService.list(commentWrapper);
+
+            // 批量获取文章标题 (缓存优化)
+            Set<Integer> articleIds = myComments.stream().map(Comment::getArticleId).collect(Collectors.toSet());
+            Map<Integer, String> articleTitleMap = new HashMap<>();
+            if (!articleIds.isEmpty()) {
+                List<Article> articles = articleService.listByIds(articleIds);
+                for (Article art : articles) articleTitleMap.put(art.getId(), art.getTitle());
+            }
+
+            for (Comment c : myComments) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", c.getId());
+                map.put("content", c.getContent());
+                map.put("created", c.getCreated());
+                map.put("articleId", c.getArticleId());
+                map.put("type", "COMMENT"); // 标记为主评论
+                map.put("targetTitle", articleTitleMap.getOrDefault(c.getArticleId(), "未知文章"));
+                list.add(map);
+            }
+
+            // 2. 获取我的所有回复
+            QueryWrapper<Reply> replyWrapper = new QueryWrapper<>();
+            replyWrapper.eq("user_id", user.getId()); // 注意：回复表存的是userId
+            List<Reply> myReplies = replyService.list(replyWrapper);
+
+            // 对于回复，我们需要知道它是回复了 谁 (targetName) 里的 什么内容
+            // 并且最好也能跳转到文章，所以需要父评论的 articleId
+            Set<Integer> parentCommentIds = myReplies.stream().map(Reply::getCommentId).collect(Collectors.toSet());
+            Map<Integer, Comment> parentCommentMap = new HashMap<>();
+            if (!parentCommentIds.isEmpty()) {
+                List<Comment> parents = commentService.listByIds(parentCommentIds);
+                for (Comment p : parents) parentCommentMap.put(p.getId(), p);
+            }
+
+            // 补充父评论的文章ID到 articleIds 以获取标题（如果父评论的文章ID之前没查过）
+            Set<Integer> additionalArticleIds = new HashSet<>();
+            for (Comment p : parentCommentMap.values()) additionalArticleIds.add(p.getArticleId());
+            additionalArticleIds.removeAll(articleTitleMap.keySet()); // 去重
+            if (!additionalArticleIds.isEmpty()) {
+                List<Article> moreArticles = articleService.listByIds(additionalArticleIds);
+                for (Article art : moreArticles) articleTitleMap.put(art.getId(), art.getTitle());
+            }
+
+            for (Reply r : myReplies) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", r.getId());
+                map.put("content", r.getContent());
+                map.put("created", r.getCreated());
+                map.put("type", "REPLY"); // 标记为回复
+
+                Comment parent = parentCommentMap.get(r.getCommentId());
+                if (parent != null) {
+                    map.put("articleId", parent.getArticleId());
+                    map.put("articleTitle", articleTitleMap.getOrDefault(parent.getArticleId(), "未知文章"));
+
+                    // 构造显示文本: "回复了 @某某: 内容"
+                    String target = r.getTargetName() != null ? r.getTargetName() : parent.getAuthor();
+                    map.put("targetUser", target);
+                    map.put("targetContent", r.getTargetName() != null ? "(回复内容)" : parent.getContent());
+                }
+                list.add(map);
+            }
+
+            // 按时间倒序
+            list.sort((o1, o2) -> {
+                String t1 = o1.get("created").toString();
+                String t2 = o2.get("created").toString();
+                return t2.compareTo(t1);
+            });
+
             result.getMap().put("comments", list);
+            result.setSuccess(true);
         } catch (Exception e) {
             e.printStackTrace();
             result.setErrorMessage("获取评论失败");

@@ -100,53 +100,57 @@ public class UserController {
     }
 
     // 替换原来的 updateInfo 方法
+    // 【修改】参数改为 UserDTO 以接收 code，并增强安全性
     @PostMapping("/updateInfo")
-    public Result updateInfo(@RequestBody User user) {
+    public Result updateInfo(@RequestBody UserDTO userDTO) {
         Result result = new Result();
         try {
-            // 1. 获取当前登录用户
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             String currentUsername = ((UserDetails) principal).getUsername();
             User currentUser = userService.selectByUsername(currentUsername);
 
             if (currentUser != null) {
-                // 2. 检查用户名修改
-                if (user.getUsername() != null && !user.getUsername().equals(currentUser.getUsername())) {
-                    User checkUser = userService.selectByUsername(user.getUsername());
+                // 1. 修改用户名 (原名不一致且新名未被占用)
+                if (StringUtils.hasText(userDTO.getUsername()) && !userDTO.getUsername().equals(currentUser.getUsername())) {
+                    User checkUser = userService.selectByUsername(userDTO.getUsername());
                     if (checkUser != null) {
-                        result.setErrorMessage("该用户名已被占用，请更换！");
-                        return result;
+                        return new Result(false, "该用户名已被占用，请更换！");
                     }
-                    currentUser.setUsername(user.getUsername());
+                    currentUser.setUsername(userDTO.getUsername());
                 }
 
-                // 3. 更新其他信息
-                if (user.getEmail() != null) {
-                    currentUser.setEmail(user.getEmail());
+                // 2. 【新增】修改邮箱 (需验证码)
+                if (StringUtils.hasText(userDTO.getEmail()) && !userDTO.getEmail().equals(currentUser.getEmail())) {
+                    // 检查验证码
+                    String key = "verify_code:" + userDTO.getEmail();
+                    String cachedCode = redisTemplate.opsForValue().get(key);
+                    if (cachedCode == null || !cachedCode.equals(userDTO.getCode())) {
+                        return new Result(false, "修改邮箱需要正确的验证码！");
+                    }
+                    currentUser.setEmail(userDTO.getEmail());
+                    redisTemplate.delete(key); // 使用后删除
                 }
 
-                // 【修复】添加头像更新逻辑
-                if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
-                    currentUser.setAvatar(user.getAvatar());
+                // 3. 修改头像
+                if (StringUtils.hasText(userDTO.getAvatar())) {
+                    currentUser.setAvatar(userDTO.getAvatar());
                 }
-
-                // 【建议】如果 UserDTO 有昵称 name 字段，这里也应该更新
-                // if (user.getName() != null) currentUser.setName(user.getName());
 
                 // 4. 执行更新
                 userService.updateById(currentUser);
 
-                // 重新封装 UserDTO 返回给前端更新 Store
-                UserDTO userDTO = UserDTO.entityToDto(currentUser);
-                // 补充权限信息(因为entity里没有)
-                userDTO.setAuthorities(userMapper.findAuthorityByName(currentUser.getUsername()));
+                // 返回更新后的 DTO
+                UserDTO responseDTO = UserDTO.entityToDto(currentUser);
+                responseDTO.setAuthorities(userMapper.findAuthorityByName(currentUser.getUsername()));
 
-                result.getMap().put("user", userDTO); // 返回 DTO 更规范
+                result.getMap().put("user", responseDTO);
                 result.setMsg("修改成功");
                 result.setSuccess(true);
+            } else {
+                result.setErrorMessage("用户未登录或不存在");
             }
         } catch (Exception e) {
-            result.setErrorMessage("修改失败");
+            result.setErrorMessage("修改失败: " + e.getMessage());
             e.printStackTrace();
         }
         return result;

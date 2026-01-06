@@ -41,7 +41,7 @@ public class WebConfig implements WebMvcConfigurer {
 
         // 3. [修改] 头像上传映射，使用配置文件中的变量
         // 访问 /api/file/images/** -> 去 D:\my_blog_upload\ 找
-        registry.addResourceHandler("/file/images/**")
+        registry.addResourceHandler("/api/file/images/**")
                 .addResourceLocations("file:" + uploadAvatarDir);
     }
 

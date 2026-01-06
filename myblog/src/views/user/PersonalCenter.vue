@@ -20,7 +20,8 @@ const userInfoForm = reactive({
   username: '',
   name: '',
   email: '',
-  avatar: '' // 头像
+  avatar: '', // 头像
+  code: '' // 【新增】验证码
 })
 
 // --- 核心功能 1: 头像上传 ---
@@ -46,6 +47,27 @@ function beforeAvatarUpload(rawFile) {
   return true
 }
 
+// 【新增】发送验证码
+const sending = ref(false)
+const timer = ref(0)
+function sendEmailCode() {
+  if (!userInfoForm.email) return ElMessage.warning('请先填写邮箱')
+  sending.value = true
+  axios.post('/api/user/sendEmailCode?email=' + userInfoForm.email).then(res => {
+    if (res.data.success) {
+      ElMessage.success('验证码已发送')
+      timer.value = 60
+      const interval = setInterval(() => {
+        timer.value--
+        if (timer.value <= 0) clearInterval(interval)
+      }, 1000)
+    } else {
+      ElMessage.error(res.data.msg)
+    }
+    sending.value = false
+  })
+}
+
 // --- 数据加载 ---
 function loadAllData() {
   if (!store.user.user) return
@@ -54,7 +76,7 @@ function loadAllData() {
   // 1. 初始化表单 (修复 Bug: 确保显示正确的数据)
   userInfoForm.id = u.id
   userInfoForm.username = u.username
-  userInfoForm.name = u.name || u.username // 如果没昵称，默认显示用户名
+  userInfoForm.name = u.name || u.username
   userInfoForm.email = u.email
   userInfoForm.avatar = u.avatar
 
@@ -79,6 +101,8 @@ function submitUpdate() {
   axios.post('/api/user/updateInfo', userInfoForm).then(res => {
     if (res.data.success) {
       ElMessage.success('修改成功')
+      store.login(res.data.map.user) // 更新 Store
+      userInfoForm.code = '' // 清空验证码
       // 关键：更新 Pinia 里的用户信息，解决刷新前显示旧数据的Bug
       store.login(res.data.map.user)
     } else {
@@ -90,6 +114,9 @@ function submitUpdate() {
 onMounted(() => {
   loadAllData()
 })
+
+// 工具：日期格式化 (处理 T)
+const fmtDate = (str) => str ? str.replace('T', ' ') : ''
 </script>
 
 <template>
@@ -99,17 +126,13 @@ onMounted(() => {
 
   <div class="center-container">
     <el-row :gutter="20">
-
       <el-col :xs="24" :sm="8">
         <el-card class="box-card" shadow="hover">
           <div class="user-header">
-            <el-avatar :size="100"
-              :src="store.user.user?.avatar || 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'" />
-
-            <h3 class="username">{{ store.user.user?.name || store.user.user?.username }}</h3>
-
+            <el-avatar :size="100" :src="store.user.user?.avatar || '/api/images/default.png'" />
+            <h3 class="username">{{ store.user.user?.username }}</h3>
             <p class="reg-time">
-              注册于: {{ store.user.user?.created ? store.user.user.created.replace('T', ' ') : '未知时间' }}
+              注册于: {{ fmtDate(store.user.user?.created) }}
             </p>
           </div>
         </el-card>
@@ -122,18 +145,14 @@ onMounted(() => {
             <el-tab-pane name="timeline" label="我的足迹">
               <el-scrollbar max-height="500px">
                 <el-timeline v-if="activities.length > 0" style="padding-top: 10px;">
-                  <el-timeline-item v-for="(act, i) in activities" :key="i" :timestamp="act.created.replace('T', ' ')"
+                  <el-timeline-item v-for="(act, i) in activities" :key="i" :timestamp="fmtDate(act.created)"
                     placement="top" :color="act.type === 'COMMENT' ? '#409EFF' : '#909399'">
-
                     <span v-if="act.targetId && (act.type === 'BROWSE' || act.type === 'COMMENT')"
-                      @click="$router.push('/article_comment/' + act.targetId)" style="cursor: pointer; color: #303133;"
+                      @click="$router.push('/article_comment/' + act.targetId)" style="cursor: pointer;"
                       class="log-content">
                       {{ act.content }}
                     </span>
-                    <span v-else>
-                      {{ act.content }}
-                    </span>
-
+                    <span v-else>{{ act.content }}</span>
                   </el-timeline-item>
                 </el-timeline>
                 <el-empty v-else description="暂无足迹" />
@@ -146,7 +165,7 @@ onMounted(() => {
                   <div v-for="art in myArticles" :key="art.id" class="list-item"
                     @click="$router.push('/article_comment/' + art.id)">
                     <span class="item-title">{{ art.title }}</span>
-                    <span class="item-date">{{ art.created.replace('T', ' ') }}</span>
+                    <span class="item-date">{{ fmtDate(art.created) }}</span>
                   </div>
                 </div>
                 <el-empty v-else description="你还没发布过文章" />
@@ -156,9 +175,28 @@ onMounted(() => {
             <el-tab-pane name="comments" label="我的评论">
               <el-scrollbar max-height="500px">
                 <div v-if="myComments.length > 0">
-                  <div v-for="cmt in myComments" :key="cmt.id" class="list-item">
-                    <span class="item-content">{{ cmt.content }}</span>
-                    <span class="item-date">{{ cmt.created.replace('T', ' ') }}</span>
+                  <div v-for="cmt in myComments" :key="cmt.id" class="list-item"
+                    @click="$router.push('/article_comment/' + cmt.articleId)">
+
+                    <div style="width: 100%;">
+                      <div class="cmt-header">
+                        <span v-if="cmt.type === 'COMMENT'">
+                          评论了文章 <span class="highlight">《{{ cmt.targetTitle }}》</span>
+                        </span>
+                        <span v-else>
+                          在 <span class="highlight">《{{ cmt.articleTitle }}》</span> 中回复了
+                          <span class="highlight">@{{ cmt.targetUser }}</span>
+                          <span style="color:#999; font-size:12px; margin-left:5px;">: {{ cmt.targetContent.substring(0,
+                            10) }}...</span>
+                        </span>
+                        <span class="item-date" style="float: right;">{{ fmtDate(cmt.created) }}</span>
+                      </div>
+
+                      <div class="cmt-content">
+                        {{ cmt.content }}
+                      </div>
+                    </div>
+
                   </div>
                 </div>
                 <el-empty v-else description="你还没发表过评论" />
@@ -167,7 +205,6 @@ onMounted(() => {
 
             <el-tab-pane name="settings" label="资料设置">
               <el-form label-width="80px" style="max-width: 500px; margin-top: 20px;">
-
                 <el-form-item label="头像">
                   <el-upload class="avatar-uploader" action="/api/file/upload" :show-file-list="false"
                     :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload" name="file">
@@ -178,18 +215,28 @@ onMounted(() => {
                   </el-upload>
                 </el-form-item>
 
-                <el-form-item label="昵称">
-                  <el-input v-model="userInfoForm.name" />
+                <el-form-item label="用户名">
+                  <el-input v-model="userInfoForm.username" placeholder="修改登录用户名" />
                 </el-form-item>
+
                 <el-form-item label="邮箱">
-                  <el-input v-model="userInfoForm.email" />
+                  <el-input v-model="userInfoForm.email" placeholder="修改邮箱需验证" />
                 </el-form-item>
+
+                <el-form-item label="验证码" v-if="userInfoForm.email !== store.user.user?.email">
+                  <div style="display: flex; gap: 10px; width: 100%;">
+                    <el-input v-model="userInfoForm.code" placeholder="输入邮件验证码" />
+                    <el-button type="primary" plain @click="sendEmailCode" :disabled="timer > 0 || sending">
+                      {{ timer > 0 ? `${timer}s` : '获取验证码' }}
+                    </el-button>
+                  </div>
+                </el-form-item>
+
                 <el-form-item>
                   <el-button type="primary" @click="submitUpdate">保存修改</el-button>
                 </el-form-item>
               </el-form>
             </el-tab-pane>
-
           </el-tabs>
         </el-card>
       </el-col>
@@ -241,7 +288,25 @@ onMounted(() => {
   color: #999;
 }
 
-/* 头像上传样式 */
+/* 评论样式 */
+.cmt-header {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.highlight {
+  color: #409EFF;
+  font-weight: 500;
+}
+
+.cmt-content {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* 头像上传 */
 .avatar-uploader .el-upload {
   border: 1px dashed var(--el-border-color);
   border-radius: 6px;
@@ -270,7 +335,6 @@ onMounted(() => {
   display: block;
 }
 
-/* 【新增】鼠标悬停效果 */
 .log-content:hover {
   color: #409EFF !important;
   text-decoration: underline;

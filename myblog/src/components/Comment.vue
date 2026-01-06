@@ -1,10 +1,9 @@
 <script setup>
-import { reactive, ref, inject, onMounted } from 'vue'
+import { reactive, ref, inject, onMounted, nextTick } from 'vue'
 import { useStore } from '@/stores/my'
 import { ElMessage } from 'element-plus'
 import { dateFormat } from '../js/tool' // 确保你的 tool.js 有这个方法
 import { Sugar, LocationInformation } from '@element-plus/icons-vue' // 引入图标
-
 // 接收父组件传递的参数
 const props = defineProps(['comment', 'floor'])
 
@@ -23,6 +22,9 @@ const showReplyInput = ref(false)
 const replyContent = ref('')
 const replyPlaceholder = ref('回复层主...')
 const currentTargetUid = ref(null) // 记录要回复的目标用户ID (null代表回复层主)
+
+// 回复输入框 Ref
+const replyInputRef = ref(null) // 【新增】
 
 // 加载子评论
 function loadReplies() {
@@ -53,7 +55,7 @@ function toggleReplies() {
 
 // 点击"回复"按钮 (准备回复)
 // targetUser: 目标用户对象 (如果传null，表示回复层主)
-function prepareReply(targetUser) {
+async function prepareReply(targetUser) {
   // 1. 检查登录
   if (!store.user.user) {
     ElMessage.warning("请先登录！")
@@ -72,6 +74,12 @@ function prepareReply(targetUser) {
   // 3. 显示输入框
   showReplyInput.value = true
   replyContent.value = ""
+
+  // 【新增】等待 DOM 更新后自动聚焦
+  await nextTick()
+  if (replyInputRef.value) {
+    replyInputRef.value.focus()
+  }
 }
 
 // 发送回复
@@ -204,7 +212,8 @@ function likeTargetComment(commentObj) {
       </div>
 
       <div v-if="showReplyInput" class="reply-input-box">
-        <el-input v-model="replyContent" :placeholder="replyPlaceholder" size="small" style="margin-bottom: 5px;" />
+        <el-input ref="replyInputRef" v-model="replyContent" :placeholder="replyPlaceholder" size="small"
+          style="margin-bottom: 5px;" />
         <div style="text-align: right;">
           <el-button size="small" @click="showReplyInput = false">取消</el-button>
           <el-button type="primary" size="small" @click="sendReply">发送</el-button>
