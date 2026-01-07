@@ -103,6 +103,11 @@ function goToLogin() {
     router.push('/login')
   }
 }
+
+// === ✅【新增】跳转到个人中心 ===
+function toPersonalCenter() {
+  router.push('/personal_center')
+}
 </script>
 
 <template>
@@ -148,7 +153,7 @@ function goToLogin() {
         <a @click="goToLogin" v-if="!isLogined">登录</a>
         <a @click="toAdminMain">后台管理</a>
         <a @click="toExit" v-if="isLogined">退出</a>
-        <span v-html="userName"></span>
+        <a @click="toPersonalCenter" v-if="isLogined">{{ userName }}</a>
         <router-link title="查询" :to="{ path: '/search' }" style="text-decoration: none;">
           <el-icon>
             <Search class="searchIcon" />
