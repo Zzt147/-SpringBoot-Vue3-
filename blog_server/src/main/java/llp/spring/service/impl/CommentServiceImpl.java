@@ -11,6 +11,8 @@ import llp.spring.tools.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务实现类
@@ -30,6 +32,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         return comment;
     }
 
+    /***
     public Result getAPageCommentByArticleId(Integer articleId, PageParams pageParams){
         //查询条件构造器QueryWrapper    Java代码方式设置查询条件
         QueryWrapper wrapper = new QueryWrapper<>();
@@ -45,6 +48,30 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         result.getMap().put("total", aPage.getTotal());
         // aPage.getTotal() 是 MyBatis Plus 分页插件自动查询出来的总数，直接用即可
         
+        return result;
+    }
+    ***/
+    // 【修改】使用自定义 SQL 获取评论（含头像）
+    public Result getAPageCommentByArticleId(Integer articleId, PageParams pageParams){
+        Result result = new Result();
+
+        // 1. 计算分页参数
+        int pageNo = (int) pageParams.getPage();
+        int pageSize = (int) pageParams.getRows();
+        int offset = (pageNo - 1) * pageSize;
+
+        // 2. 调用 Mapper 自定义方法 (关联查询)
+        List<Comment> comments = commentMapper.getAPageCommentByArticleId(articleId, offset, pageSize);
+
+        // 3. 查询总条数 (用于分页)
+        QueryWrapper<Comment> wrapper = new QueryWrapper<>();
+        wrapper.eq("article_id", articleId);
+        Long total = commentMapper.selectCount(wrapper);
+
+        // 4. 封装结果
+        result.getMap().put("comments", comments);
+        result.getMap().put("total", total);
+
         return result;
     }
 

@@ -5,9 +5,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import llp.spring.entity.vo.ArticleVO;
 import llp.spring.entity.Article;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 import java.util.Map;
@@ -54,4 +52,22 @@ public interface ArticleMapper extends BaseMapper<Article> {
             "LEFT JOIN t_statistic s ON a.id = s.article_id " +
             "ORDER BY s.likes DESC LIMIT 10")
     List<ArticleVO> getLikeRanking();
+
+    // 【新增】文章点赞相关
+    @Select("SELECT COUNT(*) FROM t_article_like WHERE user_id = #{userId} AND article_id = #{articleId}")
+    Integer countArticleLike(@Param("userId") Integer userId, @Param("articleId") Integer articleId);
+
+    @Insert("INSERT INTO t_article_like (user_id, article_id) VALUES (#{userId}, #{articleId})")
+    void insertArticleLike(@Param("userId") Integer userId, @Param("articleId") Integer articleId);
+
+    @Delete("DELETE FROM t_article_like WHERE user_id = #{userId} AND article_id = #{articleId}")
+    void deleteArticleLike(@Param("userId") Integer userId, @Param("articleId") Integer articleId);
+
+    // 【新增】获取我点赞的文章
+    @Select("SELECT a.id, a.title, a.created, a.categories, IFNULL(s.hits, 0) AS hits, IFNULL(s.likes, 0) AS likes " +
+            "FROM t_article a " +
+            "JOIN t_article_like l ON a.id = l.article_id " +
+            "LEFT JOIN t_statistic s ON a.id = s.article_id " +
+            "WHERE l.user_id = #{userId} ORDER BY l.id DESC")
+    List<ArticleVO> getMyLikedArticles(@Param("userId") Integer userId);
 }

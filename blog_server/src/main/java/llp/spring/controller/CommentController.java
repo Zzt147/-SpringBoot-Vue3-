@@ -86,6 +86,14 @@ public class CommentController {
 
             comment.setCreated(LocalDateTime.now()); // 之前修改的时间
 
+            // ------------------【修复开始】------------------
+            // 2. 关键修复：在插入数据库之前，先查询 User 对象并设置 userId
+            User user = userService.selectByUsername(username);
+            if (user != null) {
+                comment.setUserId(user.getId()); // 设置 userId，这样插入数据库时该字段才有值
+            }
+            // ------------------【修复结束】------------------
+
             // 【新增代码开始】 ===
             String ip = IpUtils.getIpAddr(request);
             comment.setIp(ip);
@@ -95,7 +103,6 @@ public class CommentController {
             Comment comment1 = commentService.insert(comment);
 
             // 20251217新增功能 - 个人中心与浏览足迹
-            User user = userService.selectByUsername(username);
             if (user != null) {
                 // 记录日志：用户ID, 类型, 内容描述(截取前20个字), 关联文章ID
                 String contentSummary = comment.getContent().length() > 20 ? comment.getContent().substring(0, 20) + "..." : comment.getContent();
@@ -161,11 +168,13 @@ public class CommentController {
     private CommentMapper commentMapper; // 确保注入了 Mapper
 
     @PostMapping("/getUserComments")
-    public Result getUserComments(String author) {
+    public Result getUserComments(Integer userId) { // 👈 参数改为 userId
         Result result = new Result();
         try {
-            List<UserCommentVO> list = commentMapper.selectCommentsByAuthor(author);
+            // 调用 Mapper 的新方法 (后面会定义)
+            List<UserCommentVO> list = commentMapper.selectCommentsByUserId(userId);
             result.getMap().put("comments", list);
+            result.setSuccess(true);
         } catch (Exception e) {
             result.setErrorMessage("查询失败");
             e.printStackTrace();
@@ -188,7 +197,7 @@ public class CommentController {
 
             // 1. 获取我的所有主评论
             QueryWrapper<Comment> commentWrapper = new QueryWrapper<>();
-            commentWrapper.eq("author", username); // 注意：评论表存的是author(用户名)
+            commentWrapper.eq("user_id", user.getId());
             List<Comment> myComments = commentService.list(commentWrapper);
 
             // 批量获取文章标题 (缓存优化)
@@ -373,6 +382,21 @@ public class CommentController {
                 return new Result(false, "已点赞");
             }
         }
+    }
+
+    // 【新增】获取我点赞的评论
+    @PostMapping("/getMyLikedComments")
+    public Result getMyLikedComments(Integer userId) {
+        Result result = new Result();
+        try {
+            List<UserCommentVO> list = commentMapper.getMyLikedComments(userId);
+            result.getMap().put("comments", list);
+            result.setSuccess(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.setErrorMessage("获取失败");
+        }
+        return result;
     }
 
 }

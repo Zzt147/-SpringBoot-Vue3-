@@ -18,6 +18,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.servlet.http.HttpServletRequest;
 
+import llp.spring.entity.User; // 【新增】
+import llp.spring.service.IUserService; // 【新增】
+
 @RestController
 @RequestMapping("/api/reply")
 public class ReplyController {
@@ -28,6 +31,10 @@ public class ReplyController {
     // === 👇👇👇 新增注入 CommentMapper 👇👇👇 ===
     @Autowired
     private CommentMapper commentMapper;
+
+    // === 【新增】注入 UserService 用于查询用户ID ===
+    @Autowired
+    private IUserService userService;
 
     // 添加回复
     @PostMapping("/insert")

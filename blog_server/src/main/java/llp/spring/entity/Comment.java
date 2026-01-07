@@ -83,4 +83,8 @@ public class Comment implements Serializable {
     // 所以这里不需要 exist=false，除非你的表里确实没这个字段
     private Integer likes = 0;
     // ===========================================
+
+    // 【新增】用户头像 (数据库表中不存在该字段)
+    @TableField(exist = false)
+    private String avatar;
 }

@@ -2,6 +2,7 @@ package llp.spring.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import llp.spring.entity.*;
 import llp.spring.mapper.ArticleMapper;
+import llp.spring.mapper.StatisticMapper;
 import llp.spring.mapper.TagMapper;
 import llp.spring.tools.ArticleSearch;
 import llp.spring.tools.PageParams;
@@ -63,6 +64,9 @@ public class ArticleController {
 
     @Autowired
     private TagMapper tagMapper; // 注入
+
+    @Autowired
+    private StatisticMapper statisticMapper; // 需注入
 
     // 方法1：主页打开时或从文章返回主页时调用
     @PostMapping("/getIndexData1")
@@ -302,6 +306,58 @@ public class ArticleController {
         List<ArticleVO> list = articleMapper.getLikeRanking();
         result.getMap().put("articleVOs", list);
         result.setSuccess(true);
+        return result;
+    }
+
+    // 【新增】文章点赞/取消点赞
+    @PostMapping("/likeArticle")
+    public Result likeArticle(Integer articleId) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof UserDetails)) {
+            return new Result(false, "请先登录");
+        }
+        String username = ((UserDetails) principal).getUsername();
+        User user = userService.selectByUsername(username);
+
+        Integer count = articleMapper.countArticleLike(user.getId(), articleId);
+        Statistic statistic = statisticMapper.selectByArticleId(articleId);
+        if (statistic == null) {
+            // 如果统计表没数据，初始化一条
+            statistic = new Statistic();
+            statistic.setArticleId(articleId);
+            statistic.setLikes(0);
+            statistic.setHits(0);
+            statistic.setCommentsNum(0);
+            statisticMapper.insert(statistic);
+        }
+
+        if (count > 0) {
+            // 取消点赞
+            articleMapper.deleteArticleLike(user.getId(), articleId);
+            statistic.setLikes(Math.max(0, statistic.getLikes() - 1));
+            statisticMapper.updateById(statistic);
+            return new Result(true, "取消点赞");
+        } else {
+            // 点赞
+            articleMapper.insertArticleLike(user.getId(), articleId);
+            statistic.setLikes(statistic.getLikes() + 1);
+            statisticMapper.updateById(statistic);
+            return new Result(true, "点赞成功");
+        }
+    }
+
+    // 【新增】获取我点赞的文章
+    @PostMapping("/getMyLikedArticles")
+    public Result getMyLikedArticles(Integer userId) {
+        Result result = new Result();
+        try {
+            List<ArticleVO> list = articleMapper.getMyLikedArticles(userId);
+            result.getMap().put("articles", list);
+            result.setSuccess(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.setErrorMessage("获取失败");
+        }
         return result;
     }
 }

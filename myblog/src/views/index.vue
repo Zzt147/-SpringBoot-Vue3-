@@ -321,6 +321,12 @@ const disabled = computed(() => loading.value || noMore.value)
     </el-col>
 
   </el-row>
+  <div class="fab-btn" @click="$router.push('/admin_Main/publish_article')">
+    <el-icon size="24" color="white">
+      <Plus />
+    </el-icon>
+    <span class="fab-text">发布文章</span>
+  </div>
 </template>
 
 <style scoped>
@@ -395,5 +401,41 @@ fieldset {
   /* 兼容 Safari */
   top: 80px;
   /* 距离顶部的偏移量。因为顶部有导航栏，建议设置 70px-90px 左右 */
+}
+
+.fab-btn {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 56px;
+  background-color: #409EFF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 999;
+  overflow: hidden;
+}
+
+.fab-text {
+  display: none;
+  font-size: 14px;
+  color: white;
+  margin-left: 5px;
+  white-space: nowrap;
+}
+
+.fab-btn:hover {
+  width: 140px;
+  border-radius: 28px;
+}
+
+.fab-btn:hover .fab-text {
+  display: inline;
 }
 </style>

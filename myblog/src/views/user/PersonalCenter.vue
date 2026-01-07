@@ -14,6 +14,18 @@ const myArticles = ref([]) // 我的文章
 const myComments = ref([]) // 我的评论
 const loading = ref(false)
 
+const likedArticles = ref([])
+const likedComments = ref([])
+
+const getLikes = () => {
+  axios.post('/api/article/getMyLikedArticles', { userId: store.user.user.id }).then(res => {
+    likedArticles.value = res.data.map.articles
+  })
+  axios.post('/api/comment/getMyLikedComments', { userId: store.user.user.id }).then(res => {
+    likedComments.value = res.data.map.comments
+  })
+}
+
 // 表单数据
 const userInfoForm = reactive({
   id: '',
@@ -170,6 +182,21 @@ const fmtDate = (str) => str ? str.replace('T', ' ') : ''
                 </div>
                 <el-empty v-else description="你还没发布过文章" />
               </el-scrollbar>
+            </el-tab-pane>
+
+            <el-tab-pane label="我的点赞" name="likes">
+              <el-tabs type="card">
+                <el-tab-pane label="赞过的文章">
+                  <div v-for="item in likedArticles" :key="item.id">
+                    <router-link :to="'/article_comment/' + item.id">{{ item.title }}</router-link>
+                  </div>
+                </el-tab-pane>
+                <el-tab-pane label="赞过的评论">
+                  <div v-for="item in likedComments" :key="item.id">
+                    {{ item.content }} - 原文: {{ item.targetName }}
+                  </div>
+                </el-tab-pane>
+              </el-tabs>
             </el-tab-pane>
 
             <el-tab-pane name="comments" label="我的评论">

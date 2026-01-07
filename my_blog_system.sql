@@ -11,7 +11,7 @@
  Target Server Version : 90400 (9.4.0)
  File Encoding         : 65001
 
- Date: 07/01/2026 04:28:24
+ Date: 07/01/2026 21:45:27
 */
 
 SET NAMES utf8mb4;
@@ -23,19 +23,19 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `t_article`;
 CREATE TABLE `t_article`  (
   `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '文章标题',
-  `author` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '作者用户名',
-  `content` longtext CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL COMMENT '文章具体内容',
+  `title` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文章标题',
+  `author` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '作者用户名',
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '文章具体内容',
   `created` datetime NOT NULL COMMENT '发表时间',
   `modified` datetime NULL DEFAULT NULL COMMENT '修改时间',
-  `categories` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT '默认分类' COMMENT '文章分类',
-  `tags` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '文章标签',
+  `categories` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '默认分类' COMMENT '文章分类',
+  `tags` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '文章标签',
   `allow_comment` tinyint(1) NOT NULL DEFAULT 1 COMMENT '是否允许评论',
-  `thumbnail` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '文章缩略图',
+  `thumbnail` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '文章缩略图',
   `user_id` int NULL DEFAULT NULL COMMENT '作者ID',
-  `location` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '发布地点',
+  `location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '发布地点',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 66 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 66 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_article
@@ -85,7 +85,7 @@ INSERT INTO `t_article` VALUES (54, '听说有草稿箱功能?', 'admin', '<p>12
 INSERT INTO `t_article` VALUES (55, '2026.01.04工作总结', 'zzt', '<p>1.新增仪表盘功能(明天起床优化打磨)</p>\n<p>2.新增点赞功能</p>\n<p>3.新增发布文章可以加入定位功能</p>\n<p>4.新增沉浸阅读功能</p>\n<p>5.新增标签云功能(明天起床优化打磨)</p>\n<p>6.新增标签分类管理功能(同样缺少优化打磨)</p>\n<p>7.新增草稿箱功能</p>\n<p>8.优化主页文章封面样式排版</p>\n<p>9.合并阅读榜与点赞榜</p>\n<p>10.......</p>', '2026-01-04 23:38:22', NULL, '技术/SpringBoot', '#总结', 1, '/api/images/6.png', 6, '');
 INSERT INTO `t_article` VALUES (56, '美方披露抓获马杜罗更多细节', '李四', '<p>新华社华盛顿1月3日电　美国总统特朗普3日宣布，美国在对委内瑞拉的行动中抓获委总统马杜罗及其夫人，并将他们带离委内瑞拉。美国媒体随后披露了此次行动的更多细节。</p>\n<p>美国哥伦比亚广播公司援引消息人士的话报道，马杜罗系被美军三角洲特种部队抓获。三角洲特种部队曾于2019年执行打死极端组织&ldquo;伊斯兰国&rdquo;最高头目阿布&middot;贝克尔&middot;巴格达迪的任务。</p>\n<p>特朗普在接受《纽约时报》电话采访时说，抓获马杜罗&ldquo;得益于周密的计划、精锐的部队和优秀的人员。这真是一次精彩的行动&rdquo;。</p>\n<p>当被《纽约时报》记者问及是否就此次行动寻求过国会授权以及对委内瑞拉下一步计划时，特朗普表示，他将于美国东部时间3日11时（北京时间4日0时）在海湖庄园举行新闻发布会，回答这些问题。</p>\n<p>委内瑞拉副总统德尔西&middot;罗德里格斯3日通过国家电视台表示，委政府不知道马杜罗及其夫人现在何处，&ldquo;我们要求提供他们活着的证据&rdquo;。罗德里格斯还说，美方行动造成委官员、士兵和平民丧生。</p>', '2026-01-05 07:49:38', NULL, '新闻/时政/国外', '#时政 #新闻', 1, '/api/images/6.png', 2, 'Venezuela');
 INSERT INTO `t_article` VALUES (59, '国际社会强烈谴责美国对委内瑞拉的军事行动（国际视点）', '李四', '<p><img class=\"picture-illustrating not-indent patt\" src=\"http://paper.people.com.cn/rmrb/pc/pic/202601/05/f44651e5-6925-4b2f-a4ad-940a7eeb8036.jpg\" width=\"469\" height=\"314\" data-toggle=\"tooltip\" data-original-title=\"&lt;p&gt;　　1月3日，一些美国民众聚集在白宫外，抗议美国对委内瑞拉发起大规模军事行动。&lt;/p&gt;&lt;p&gt;　　朱莉娅&middot;尼金森摄（影像中国）&lt;/p&gt;\"></p>\n<table class=\"pci_c\" width=\"400\">\n<tbody>\n<tr>\n<td>\n<p>1月3日，一些美国民众聚集在白宫外，抗议美国对委内瑞拉发起大规模军事行动。<br>　　朱莉娅&middot;尼金森摄（影像中国）</p>\n</td>\n</tr>\n</tbody>\n</table>\n<p>　　当地时间1月3日凌晨，美国对委内瑞拉发起大规模军事行动，突袭该国首都加拉加斯并强行控制总统马杜罗及其夫人。美国的军事行动造成包括委内瑞拉军人和平民在内至少40人死亡，多个国家和国际组织对此表示强烈谴责。中国外交部发言人表示，美方行径明显违反国际法和国际关系基本准则，违反《联合国宪章》宗旨和原则。中方呼吁美方确保马杜罗总统夫妇人身安全，立即释放马杜罗总统和夫人，停止颠覆委内瑞拉政权，通过对话谈判解决问题。</p>\n<p>　　&ldquo;美国妄图夺走委内瑞拉的石油、土地和财产，委人民决不会答应&rdquo;</p>\n<p>　　美军3日凌晨突袭委内瑞拉首都加拉加斯等地，强行控制马杜罗夫妇，用直升机将他们运至一艘军舰上。他们在经停关塔那摩美军基地后乘机飞往纽约。美国媒体预计，马杜罗下周将在纽约市的一处法院&ldquo;出庭&rdquo;，面临&ldquo;毒品恐怖主义阴谋罪、可卡因走私阴谋罪&rdquo;等多项指控。美军参谋长联席会议主席丹&middot;凯恩透露，美军为行动演练数月。</p>\n<p>　　美国总统特朗普3日上午举行新闻发布会称，美国将&ldquo;管理&rdquo;委内瑞拉直至实施&ldquo;安全&rdquo;过渡，让美国石油公司大举进军委内瑞拉并投资委能源基础设施。他还声称：&ldquo;我们将从（委内瑞拉）地下开采出大量的财富，这些财富将归委内瑞拉人民以及曾经在委内瑞拉的外国人所有。这些财富也将以赔偿这个国家给我们造成损失的形式流向美国。&rdquo;</p>\n<p>　　委内瑞拉多名政要强烈谴责美国的入侵行径。委内瑞拉副总统兼石油部长德尔西&middot;罗德里格斯3日下午在国家电视台发表讲话说，马杜罗是委内瑞拉&ldquo;唯一的总统&rdquo;，&ldquo;委内瑞拉永远不会成为任何国家的殖民地&rdquo;。委内瑞拉内政、司法与和平部长迪奥斯达多&middot;卡韦略在首都加拉加斯街头谴责道：&ldquo;他们对沉睡的民众发动了卑鄙、恶毒的袭击，懦夫般地袭击了民众。&rdquo;委最高法院院长罗德里格斯通过国家电视台宣读一份声明，谴责美国对委首都加拉加斯及其周边三个州的袭击公然违反国际法，尤其是《联合国宪章》。声明说，此次侵略&ldquo;旨在攫取委内瑞拉的战略资源&rdquo;，并呼吁国际社会共同努力维护拉丁美洲和加勒比地区的和平与稳定。</p>\n<p>　　3日晚，委内瑞拉最高法院通过国家电视台宣读决定，由罗德里格斯副总统代行国家元首职责，以保证行政连续性以及国家的全面防御。决定表示，鉴于马杜罗遭绑架造成的特殊情况，最高法院在总统被迫缺位期间采取了相应程序，以在目前面临外国侵略的情况下维护国家利益。</p>\n<p>　　美国政府此次军事行动在美国国内也引发诸多抗议和批评。3日，由反战组织&ldquo;即刻行动制止战争消除种族主义&rdquo;联盟发起的示威活动，在华盛顿、洛杉矶、波士顿等105个城市同步举行。纽约时报广场上，示威者高举委内瑞拉国旗，手持&ldquo;保卫委内瑞拉，释放马杜罗&rdquo;&ldquo;不要插手委内瑞拉事务&rdquo;&ldquo;反对向委内瑞拉开战&rdquo;等标语，高喊口号抗议。一名委内瑞拉裔示威者控诉：&ldquo;美国妄图夺走委内瑞拉的石油、土地和财产，委人民决不会答应！&rdquo;组织方声明指出，美国战争机器消耗大量纳税款，却给他国民众带来死亡和毁灭，美国人民不愿再卷入新的战争。</p>\n<p>　　美联社发表评论文章表示，这是自2003年美军入侵伊拉克以来，美国为实现外国政权更迭&ldquo;采取的最激进行动&rdquo;。在特朗普政府看来，要实现&ldquo;西半球优先&rdquo;，美国必须控制或对抗拉美地区的潜在反美力量。选择委内瑞拉作为突破口，美方意在产生震荡效应，对拉美其他国家产生战略威慑，进而扩张美国在拉美影响力和战略空间。</p>\n<p>　　美国宪法规定，任何战争行为均须经国会批准，但此次行动并未获得国会授权，甚至在启动后才通知国会工作人员。美国联邦众议员吉姆&middot;希姆斯表示，未看到任何证据能证明马杜罗执政构成的威胁足以成为未经授权动武的理由，政府应立即通报决策的法律依据及后续局势应对策略。联邦众议员格雷戈里&middot;米克斯谴责该行动&ldquo;违反国际法，将损害美国全球地位&rdquo;，警告此举可能使美国卷入同委内瑞拉的无限期冲突，破坏地区稳定。</p>\n<p>　　美国前副总统、前民主党总统候选人哈里斯表示，美国对委内瑞拉采取军事行动是&ldquo;错误且不明智的&rdquo;。美国曾多次发动以&ldquo;政权更迭&rdquo;或&ldquo;石油&rdquo;为目的的战争，这些战争往往被包装成&ldquo;力量的展示&rdquo;，最终却演变为混乱局面，让美国普通家庭为此付出代价。她强调，这种做法既不合法，也不会让美国&ldquo;更安全、更强大或让美国人民的生活更可负担&rdquo;。</p>\n<p>　　《纽约时报》刊登社论指出，美方以打击&ldquo;毒品恐怖主义&rdquo;为借口纯属荒谬。社论回顾美国历史上多次武力干预他国内政的恶果：耗时20年未能在阿富汗建立稳定政府，推翻利比亚政权导致该国分裂，2003年伊拉克战争的创伤至今未愈，而智利、古巴等拉美国家也曾因美国干预陷入动荡，警告此次行动可能重蹈覆辙。</p>\n<p>　　&ldquo;这次行动具有政治和经济动机，并对地区稳定构成严重威胁&rdquo;</p>\n<p>　　美国长期视拉丁美洲为自家&ldquo;后院&rdquo;，以各种名义干预拉美内政。1823年，时任美国总统门罗提出&ldquo;门罗主义&rdquo;，警告欧洲列强不要介入美洲事务。1983年，在美国干预下，格林纳达发生内部政变，格总理毕晓普等官员被杀害。上世纪80年代，美国还支持尼加拉瓜反政府武装对抗尼加拉瓜左翼桑地诺政府，直至桑地诺政府在1990年总统选举中落败。在特朗普第二个任期内，&ldquo;门罗主义&rdquo;高调回归美国外交政策核心。特朗普3日称，其政府对&ldquo;门罗主义&rdquo;已经&ldquo;多有超越&rdquo;，美国再也不会忘记&ldquo;门罗主义&rdquo;，并将长久&ldquo;主宰&rdquo;西半球。</p>\n<p>　　美国此次军事行动引发地区国家强烈抗议。巴西外交部3日发布声明说，总统卢拉重申此前立场，谴责美国袭击委内瑞拉并强行控制马杜罗及其夫人的行为。巴西执政党劳工党同日发布声明说，美国对委内瑞拉采取的行动可以被定性为对马杜罗及其夫人的&ldquo;绑架&rdquo;。&ldquo;这次行动具有政治和经济动机，并对地区稳定构成严重威胁&rdquo;，&ldquo;构成21世纪以来南美洲遭受的最严重侵略事件&rdquo;。</p>\n<p>　　古巴各界民众3日在美国驻古巴大使馆前的反帝广场举行集会，强烈谴责美国对委内瑞拉发动军事入侵。古共中央第一书记、古巴国家主席迪亚斯&mdash;卡内尔在集会上严厉谴责美国对委内瑞拉实施的&ldquo;国家恐怖主义行径&rdquo;，并要求立即释放委内瑞拉总统马杜罗及其夫人。他指出，美国的真正企图是攫取委内瑞拉的石油、土地和自然资源。迪亚斯&mdash;卡内尔说，美国对委内瑞拉的打击，是对主权国家的公然侵犯，也是对国际法的不可接受的破坏。</p>\n<p>　　乌拉圭外交部3日发布声明说，乌方严重关切委内瑞拉发生的事件，包括美国对委内瑞拉军事设施和民用基础设施的空袭，谴责对他国领土的军事干预行为，并重申各国应尊重国际法和《联合国宪章》。</p>\n<p>　　拉共体轮值主席国哥伦比亚外交部发布声明，对新近发生的针对委内瑞拉领土完整和政治自主权采取的武装行动表示谴责。声明指出，哥伦比亚重申对地区和平与安全、国家主权以及《联合国宪章》原则的坚定承诺，特别是禁止使用武力及和平解决争端的原则。作为和平区，拉美地区的历史经验表明，任何争端都无法通过单边行动得到合法解决。</p>\n<p>　　哥伦比亚总统府办公厅主任安吉&middot;罗德里格斯3日晚宣布，哥方要求5日召开联合国安全理事会紧急会议，并提议召开美洲国家组织常设理事会特别会议，以应对委内瑞拉局势变化对地区稳定造成的影响。罗德里格斯说，哥伦比亚已在与委接壤的边境地区启动医疗系统黄色警戒。哥政府下令加强人道主义措施，并在哥委边境部署3万名士兵，宣布武装部队进入一级战备状态，以应对可能升级的局势。</p>\n<p>　　&ldquo;美方行动构成危险的先例，违背国际法准则&rdquo;</p>\n<p>　　联合国秘书长古特雷斯通过发言人发表声明，对委内瑞拉局势升级深表震惊，指出&ldquo;美方行动构成危险的先例，违背国际法准则&rdquo;。他呼吁各方开展包容性对话，尊重人权和法治。应委内瑞拉正式请求，联合国安理会定于美国东部时间1月5日上午10点举行紧急会议，就此次军事行动进行讨论。联合国人权事务高级专员蒂尔克敦促各方保持克制，强调&ldquo;保护委内瑞拉人民是首要任务&rdquo;。</p>\n<p>　　非洲联盟3日发布声明说，非盟正在关注委内瑞拉局势，对该国近期发生的事件深感忧虑。委内瑞拉内部问题唯有通过委内瑞拉人民的政治对话才能得到妥善解决，并呼吁各方尊重国际法。</p>\n<p>　　俄罗斯外交部3日在社交媒体发布消息说，俄外长拉夫罗夫当天与白俄罗斯外长雷任科夫通电话，双方一致强烈谴责美国侵略委内瑞拉，强调必须立即释放马杜罗及其夫人，让他们返回祖国。两国外长还说，必须尽快创造条件，通过符合国际法的对话解决委内瑞拉问题。</p>\n<p>　　据朝中社4日报道，朝鲜外务省发言人当天表示，委内瑞拉当前局势的严重性完全是由美国动用强权造成的，这将使本已脆弱的地区局势更加不稳定。这名发言人称，该事件再次清楚地证明了美国的野蛮行径。</p>\n<p>　　法国外长巴罗3日在社交媒体发文表示，强行控制委内瑞拉总统马杜罗的军事行动违背了国际法赖以建立的不使用武力原则。巴罗强调，任何持久的政治解决方案都不能由外部强加，只有主权人民有权决定他们的未来。法国重申遵循《联合国宪章》，该宪章将继续指导各国在任何时刻、任何地方的国际行动。</p>\n<p>　　挪威外交大臣艾德3日接受挪威广播公司采访时表示，国际法具有普遍性和约束力，美国对委内瑞拉的干预&ldquo;不符合国际法&rdquo;。丹麦外交大臣拉斯穆森3日接受丹麦广播公司采访时说，必须维护对国际规则的尊重，国际法应得到遵守。他强调国际社会应&ldquo;回到缓和局势、推动对话的轨道上来&rdquo;。</p>\n<p>&nbsp;</p>\n<p><span id=\"paper_num\">　　《 人民日报 》（ 2026年01月05日 15 版）</span></p>', '2026-01-05 10:39:08', NULL, '新闻/时政/国外', '#新闻 #热点', 1, '/api/images/6.png', 2, '');
-INSERT INTO `t_article` VALUES (62, '咖啡', '李四', '<p><img src=\"/api/images/bfdcc7bc-581f-4c24-b5fd-3434b533b00c.jpg\" width=\"643\" height=\"482\"></p>\n<p>埃塞的豆子</p>', '2026-01-05 11:06:22', NULL, '生活', '#美饮 #咖啡 #coffee #Hong #Kong', 1, '/api/images/e136d48c-4711-41ee-ab1e-67a2d89cf05a.jpg', 2, '香港');
+INSERT INTO `t_article` VALUES (62, '咖啡', '李四', '<p><img src=\"/api/images/bfdcc7bc-581f-4c24-b5fd-3434b533b00c.jpg\" width=\"643\" height=\"482\"></p>\n<p>埃塞的豆子</p>', '2026-01-05 11:06:22', NULL, '生活', '#美饮 #咖啡 #coffee #Hong Kong', 1, '/api/images/e136d48c-4711-41ee-ab1e-67a2d89cf05a.jpg', 2, '香港');
 INSERT INTO `t_article` VALUES (65, '2025.01.06工作总结', '王德发', '<p>1.新增排行榜排位变化（需打磨升级）。</p>\n<p>1.修复头像上传预览：修正了后端静态资源映射路径，解决上传头像后无法立即加载的问题。&nbsp;</p>\n<p>2.修复用户名修改失效：修正了前端表单数据绑定错误（name -&gt; username），确保修改能正确提交。</p>\n<p>3.修复时间显示精度：修正了注册时间只显示日期不显示时间的问题。</p>\n<p>4. 增强账户安全性：修改邮箱现在必须获取并输入邮件验证码，流程与注册一致。</p>\n<p>5. 升级&ldquo;我的评论&rdquo;：个人中心现在可以查看您的回复记录，并清晰展示是&ldquo;评论了文章《X》&rdquo;还是&ldquo;回复了用户 @Y&rdquo;。</p>\n<p>6. 优化评论交互：在评论区点击&ldquo;回复&rdquo;按钮时，输入框会自动弹出并获取光标，无需手动点击。</p>', '2026-01-07 04:26:20', NULL, '学习', '#总结 #学习', 1, '/api/images/6.png', 8, '东莞理工学院');
 
 -- ----------------------------
@@ -216,7 +216,7 @@ CREATE TABLE `t_category`  (
   `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '分类名称',
   `sort` int NULL DEFAULT 0 COMMENT '排序（越小越前）',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '无限级文章分类表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '无限级文章分类表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_category
@@ -233,6 +233,8 @@ INSERT INTO `t_category` VALUES (9, 2, '美食', 0);
 INSERT INTO `t_category` VALUES (10, 0, '新闻', 0);
 INSERT INTO `t_category` VALUES (11, 10, '时政', 0);
 INSERT INTO `t_category` VALUES (12, 11, '国外', 0);
+INSERT INTO `t_category` VALUES (13, 1, 'Python', 0);
+INSERT INTO `t_category` VALUES (14, 1, 'Python', 0);
 
 -- ----------------------------
 -- Table structure for t_comment
@@ -242,15 +244,15 @@ CREATE TABLE `t_comment`  (
   `id` int NOT NULL AUTO_INCREMENT COMMENT '评论id',
   `article_id` int NOT NULL COMMENT '关联的文章id',
   `created` datetime NOT NULL COMMENT '评论时间',
-  `ip` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '评论用户登录的ip地址',
-  `content` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '评论内容',
-  `status` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'approved' COMMENT '评论状态',
-  `author` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '评论用户用户名',
+  `ip` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '评论用户登录的ip地址',
+  `content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '评论内容',
+  `status` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'approved' COMMENT '评论状态',
+  `author` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '评论用户用户名',
   `user_id` int NULL DEFAULT NULL COMMENT '评论者ID',
-  `location` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT 'IP属地',
+  `location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'IP属地',
   `likes` int NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 114 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 121 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_comment
@@ -279,71 +281,76 @@ INSERT INTO `t_comment` VALUES (42, 21, '2025-12-17 03:25:16', NULL, '1', 'appro
 INSERT INTO `t_comment` VALUES (43, 21, '2025-12-17 03:25:17', NULL, '2', 'approved', '123', 5, NULL, 0);
 INSERT INTO `t_comment` VALUES (44, 23, '2025-12-17 21:19:58', NULL, '???为什么这个文章显示不出来\n', 'approved', 'zzt', 6, NULL, 0);
 INSERT INTO `t_comment` VALUES (45, 24, '2025-12-18 04:43:01', NULL, '已修复', 'approved', 'zzt', 6, NULL, 3);
-INSERT INTO `t_comment` VALUES (46, 29, '2026-01-02 04:14:11', NULL, '新年快乐', 'approved', 'zzt', NULL, NULL, 0);
-INSERT INTO `t_comment` VALUES (47, 29, '2026-01-02 04:14:34', NULL, '新年快乐', 'approved', '123', NULL, NULL, 0);
-INSERT INTO `t_comment` VALUES (48, 1, '2026-01-02 15:30:17', NULL, '真的能高薪吗', 'approved', 'zzt', NULL, NULL, 0);
-INSERT INTO `t_comment` VALUES (49, 30, '2026-01-02 17:43:52', '192.168.1.100', '看看ip\n', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (50, 30, '2026-01-02 18:08:01', '192.168.1.100', '再看看', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (51, 30, '2026-01-02 19:59:14', '192.168.1.100', '再看看看', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (52, 30, '2026-01-02 20:02:01', '192.168.1.100', '本地局域网是什么鬼', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (53, 30, '2026-01-03 00:29:10', '142.249.36.58', '看看ip', 'approved', '123', NULL, '未知星球', 0);
-INSERT INTO `t_comment` VALUES (54, 30, '2026-01-03 00:33:06', '142.249.36.58', '现在是哪里', 'approved', '123', NULL, '加拿大|0|0|0', 0);
-INSERT INTO `t_comment` VALUES (55, 30, '2026-01-03 00:34:51', '141.11.146.76', '再看一眼', 'approved', '123', NULL, '法国|0|0|法国电信', 0);
-INSERT INTO `t_comment` VALUES (56, 30, '2026-01-03 06:24:09', '192.168.1.100', '再看看', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (57, 30, '2026-01-03 06:24:22', '45.147.201.215', '再看看\n', 'approved', '123', NULL, '荷兰|0|0|0', 0);
-INSERT INTO `t_comment` VALUES (58, 30, '2026-01-03 06:41:07', '192.168.1.100', '有点小bug\n', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (59, 30, '2026-01-03 18:35:01', '192.168.1.100', '1234', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (60, 30, '2026-01-04 00:43:57', '142.249.36.185', '看一下ip', 'approved', '123', NULL, '加拿大|0|0|0', 0);
-INSERT INTO `t_comment` VALUES (61, 26, '2026-01-04 01:07:07', '142.249.36.185', '来水一下', 'approved', '123', NULL, '加拿大|0|0|0', 0);
-INSERT INTO `t_comment` VALUES (62, 30, '2026-01-04 01:44:57', '142.249.36.185', '你好', 'approved', '123', NULL, '加拿大|0|0|0', 0);
-INSERT INTO `t_comment` VALUES (63, 30, '2026-01-04 01:45:52', '142.249.36.185', '你好', 'approved', '123', NULL, '加拿大|0|0|0', 0);
-INSERT INTO `t_comment` VALUES (64, 30, '2026-01-04 01:46:20', '142.249.36.185', '你好', 'approved', '123', NULL, '加拿大|0|0|0', 0);
-INSERT INTO `t_comment` VALUES (65, 30, '2026-01-04 01:51:20', '192.168.1.100', '你好', 'approved', '123', NULL, '本地局域网', 1);
-INSERT INTO `t_comment` VALUES (66, 30, '2026-01-04 01:51:32', '192.168.1.100', '你好', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (67, 30, '2026-01-04 01:54:53', '192.168.1.100', '你好', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (68, 30, '2026-01-04 01:55:05', '192.168.1.100', '数据库为空???\n', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (69, 16, '2026-01-04 02:01:36', '142.249.36.185', '我来评论一下你的文章', 'approved', 'zzt', NULL, '加拿大|0|0|0', 0);
-INSERT INTO `t_comment` VALUES (70, 34, '2026-01-04 02:25:39', '192.168.1.100', '我来评论一下你', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (71, 34, '2026-01-04 02:33:50', '192.168.1.100', '我来评论一下我自己的文章', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (72, 33, '2026-01-04 02:34:12', '192.168.1.100', '我来评论一下admin的文章', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (73, 32, '2026-01-04 02:34:31', '192.168.1.100', '我再来评论一下admin的文章', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (74, 31, '2026-01-04 02:34:47', '192.168.1.100', '我继续评论admin的文章\n', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (75, 34, '2026-01-04 02:35:14', '192.168.1.100', '我来评论一下123的文章', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (76, 36, '2026-01-04 03:23:24', '192.168.1.100', '修复成功啦', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (77, 30, '2026-01-04 08:24:58', '192.168.1.105', '我现在在哪里', 'approved', '李四', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (78, 37, '2026-01-04 08:30:52', '192.168.1.102', '我来回复一下', 'approved', '李四', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (79, 37, '2026-01-04 08:32:03', '192.168.1.102', '我也来回复一下', 'approved', 'tom', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (80, 40, '2026-01-04 09:13:37', '192.168.1.102', '看来是可以！', 'approved', '东方不败', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (82, 41, '2026-01-04 10:30:50', '192.168.1.102', '看起来好好喝', 'approved', '东方不败', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (83, 41, '2026-01-04 10:32:40', '192.168.1.102', '李四的号有问题', 'approved', 'tom', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (85, 41, '2026-01-04 10:35:46', '192.168.1.102', '怎么评论不了了?。。。', 'approved', 'tom', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (86, 41, '2026-01-04 10:35:56', '192.168.1.102', '香港物价就是这样的，一杯要你七八十刀', 'approved', '东方不败', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (87, 41, '2026-01-04 11:19:08', '192.168.1.102', '亚米亚米', 'approved', '李四', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (88, 41, '2026-01-04 11:30:11', '192.168.1.102', '香港真是个好地方啊', 'approved', '东方不败', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (89, 40, '2026-01-04 11:34:26', '192.168.1.102', '评论一下就消失了...', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (90, 23, '2026-01-04 11:34:51', '192.168.1.102', '奇怪', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (92, 41, '2026-01-04 11:50:13', '192.168.1.102', '好是好，但是太贵了！', 'approved', '尊贵的iPhone17ProMax用户', NULL, '本地局域网', 1);
-INSERT INTO `t_comment` VALUES (93, 41, '2026-01-04 13:39:36', '192.168.1.102', '怎么有小概率评论框会显示。。。', 'approved', 'tom', NULL, '本地局域网', 3);
-INSERT INTO `t_comment` VALUES (94, 1, '2026-01-04 19:52:36', '192.168.1.102', '我来刷一下楼数', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (95, 1, '2026-01-04 19:52:43', '192.168.1.102', '我来刷一下楼数1', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (96, 1, '2026-01-04 19:52:46', '192.168.1.102', '我来刷一下楼数2', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (97, 1, '2026-01-04 19:52:50', '192.168.1.102', '我来刷一下楼数3', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (98, 1, '2026-01-04 19:52:55', '192.168.1.102', '我来刷一下楼数4', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (99, 1, '2026-01-04 19:53:01', '192.168.1.102', '我来刷一下楼数5', 'approved', '123', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (100, 41, '2026-01-04 22:19:50', '192.168.1.102', '呃呃', 'approved', 'zzt', NULL, '本地局域网', 3);
-INSERT INTO `t_comment` VALUES (101, 55, '2026-01-04 23:38:33', '192.168.1.102', '辛苦你了', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (102, 55, '2026-01-04 23:39:01', '192.168.1.102', '哇塞,向博主学习', 'approved', '李四', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (103, 41, '2026-01-04 23:44:38', '192.168.1.102', '这个帖子最近很火哦', 'approved', '东方不败', NULL, '本地局域网', 1);
-INSERT INTO `t_comment` VALUES (104, 41, '2026-01-04 23:48:48', '192.168.1.102', '图片比例尺有点奇怪', 'approved', 'tom', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (105, 62, '2026-01-05 13:22:19', '192.168.1.102', '个人感觉有点发酵,不过还行', 'approved', 'zzt', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (106, 62, '2026-01-05 13:39:18', '120.235.59.235', '我评论一下', 'approved', 'zzt', NULL, '中国|广东省|东莞市|移动', 0);
-INSERT INTO `t_comment` VALUES (107, 30, '2026-01-05 13:46:55', '192.168.1.102', '现在我应该是本地局域网', 'approved', '我不是马神', NULL, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (46, 29, '2026-01-02 04:14:11', NULL, '新年快乐', 'approved', 'zzt', 6, NULL, 0);
+INSERT INTO `t_comment` VALUES (47, 29, '2026-01-02 04:14:34', NULL, '新年快乐', 'approved', '123', 5, NULL, 0);
+INSERT INTO `t_comment` VALUES (48, 1, '2026-01-02 15:30:17', NULL, '真的能高薪吗', 'approved', 'zzt', 6, NULL, 0);
+INSERT INTO `t_comment` VALUES (49, 30, '2026-01-02 17:43:52', '192.168.1.100', '看看ip\n', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (50, 30, '2026-01-02 18:08:01', '192.168.1.100', '再看看', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (51, 30, '2026-01-02 19:59:14', '192.168.1.100', '再看看看', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (52, 30, '2026-01-02 20:02:01', '192.168.1.100', '本地局域网是什么鬼', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (53, 30, '2026-01-03 00:29:10', '142.249.36.58', '看看ip', 'approved', '123', 5, '未知星球', 0);
+INSERT INTO `t_comment` VALUES (54, 30, '2026-01-03 00:33:06', '142.249.36.58', '现在是哪里', 'approved', '123', 5, '加拿大|0|0|0', 0);
+INSERT INTO `t_comment` VALUES (55, 30, '2026-01-03 00:34:51', '141.11.146.76', '再看一眼', 'approved', '123', 5, '法国|0|0|法国电信', 0);
+INSERT INTO `t_comment` VALUES (56, 30, '2026-01-03 06:24:09', '192.168.1.100', '再看看', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (57, 30, '2026-01-03 06:24:22', '45.147.201.215', '再看看\n', 'approved', '123', 5, '荷兰|0|0|0', 0);
+INSERT INTO `t_comment` VALUES (58, 30, '2026-01-03 06:41:07', '192.168.1.100', '有点小bug\n', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (59, 30, '2026-01-03 18:35:01', '192.168.1.100', '1234', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (60, 30, '2026-01-04 00:43:57', '142.249.36.185', '看一下ip', 'approved', '123', 5, '加拿大|0|0|0', 0);
+INSERT INTO `t_comment` VALUES (61, 26, '2026-01-04 01:07:07', '142.249.36.185', '来水一下', 'approved', '123', 5, '加拿大|0|0|0', 0);
+INSERT INTO `t_comment` VALUES (62, 30, '2026-01-04 01:44:57', '142.249.36.185', '你好', 'approved', '123', 5, '加拿大|0|0|0', 0);
+INSERT INTO `t_comment` VALUES (63, 30, '2026-01-04 01:45:52', '142.249.36.185', '你好', 'approved', '123', 5, '加拿大|0|0|0', 0);
+INSERT INTO `t_comment` VALUES (64, 30, '2026-01-04 01:46:20', '142.249.36.185', '你好', 'approved', '123', 5, '加拿大|0|0|0', 0);
+INSERT INTO `t_comment` VALUES (65, 30, '2026-01-04 01:51:20', '192.168.1.100', '你好', 'approved', '123', 5, '本地局域网', 1);
+INSERT INTO `t_comment` VALUES (66, 30, '2026-01-04 01:51:32', '192.168.1.100', '你好', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (67, 30, '2026-01-04 01:54:53', '192.168.1.100', '你好', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (68, 30, '2026-01-04 01:55:05', '192.168.1.100', '数据库为空???\n', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (69, 16, '2026-01-04 02:01:36', '142.249.36.185', '我来评论一下你的文章', 'approved', 'zzt', 6, '加拿大|0|0|0', 0);
+INSERT INTO `t_comment` VALUES (70, 34, '2026-01-04 02:25:39', '192.168.1.100', '我来评论一下你', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (71, 34, '2026-01-04 02:33:50', '192.168.1.100', '我来评论一下我自己的文章', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (72, 33, '2026-01-04 02:34:12', '192.168.1.100', '我来评论一下admin的文章', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (73, 32, '2026-01-04 02:34:31', '192.168.1.100', '我再来评论一下admin的文章', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (74, 31, '2026-01-04 02:34:47', '192.168.1.100', '我继续评论admin的文章\n', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (75, 34, '2026-01-04 02:35:14', '192.168.1.100', '我来评论一下123的文章', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (76, 36, '2026-01-04 03:23:24', '192.168.1.100', '修复成功啦', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (77, 30, '2026-01-04 08:24:58', '192.168.1.105', '我现在在哪里', 'approved', '李四', 2, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (78, 37, '2026-01-04 08:30:52', '192.168.1.102', '我来回复一下', 'approved', '李四', 2, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (79, 37, '2026-01-04 08:32:03', '192.168.1.102', '我也来回复一下', 'approved', 'tom', 4, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (80, 40, '2026-01-04 09:13:37', '192.168.1.102', '看来是可以！', 'approved', '东方不败', 3, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (82, 41, '2026-01-04 10:30:50', '192.168.1.102', '看起来好好喝', 'approved', '东方不败', 3, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (83, 41, '2026-01-04 10:32:40', '192.168.1.102', '李四的号有问题', 'approved', 'tom', 4, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (85, 41, '2026-01-04 10:35:46', '192.168.1.102', '怎么评论不了了?。。。', 'approved', 'tom', 4, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (86, 41, '2026-01-04 10:35:56', '192.168.1.102', '香港物价就是这样的，一杯要你七八十刀', 'approved', '东方不败', 3, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (87, 41, '2026-01-04 11:19:08', '192.168.1.102', '亚米亚米', 'approved', '李四', 2, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (88, 41, '2026-01-04 11:30:11', '192.168.1.102', '香港真是个好地方啊', 'approved', '东方不败', 3, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (89, 40, '2026-01-04 11:34:26', '192.168.1.102', '评论一下就消失了...', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (90, 23, '2026-01-04 11:34:51', '192.168.1.102', '奇怪', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (92, 41, '2026-01-04 11:50:13', '192.168.1.102', '好是好，但是太贵了！', 'approved', '尊贵的iPhone17ProMax用户', 7, '本地局域网', 1);
+INSERT INTO `t_comment` VALUES (93, 41, '2026-01-04 13:39:36', '192.168.1.102', '怎么有小概率评论框会显示。。。', 'approved', 'tom', 4, '本地局域网', 3);
+INSERT INTO `t_comment` VALUES (94, 1, '2026-01-04 19:52:36', '192.168.1.102', '我来刷一下楼数', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (95, 1, '2026-01-04 19:52:43', '192.168.1.102', '我来刷一下楼数1', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (96, 1, '2026-01-04 19:52:46', '192.168.1.102', '我来刷一下楼数2', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (97, 1, '2026-01-04 19:52:50', '192.168.1.102', '我来刷一下楼数3', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (98, 1, '2026-01-04 19:52:55', '192.168.1.102', '我来刷一下楼数4', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (99, 1, '2026-01-04 19:53:01', '192.168.1.102', '我来刷一下楼数5', 'approved', '123', 5, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (100, 41, '2026-01-04 22:19:50', '192.168.1.102', '呃呃', 'approved', 'zzt', 6, '本地局域网', 3);
+INSERT INTO `t_comment` VALUES (101, 55, '2026-01-04 23:38:33', '192.168.1.102', '辛苦你了', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (102, 55, '2026-01-04 23:39:01', '192.168.1.102', '哇塞,向博主学习', 'approved', '李四', 2, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (103, 41, '2026-01-04 23:44:38', '192.168.1.102', '这个帖子最近很火哦', 'approved', '东方不败', 3, '本地局域网', 1);
+INSERT INTO `t_comment` VALUES (104, 41, '2026-01-04 23:48:48', '192.168.1.102', '图片比例尺有点奇怪', 'approved', 'tom', 4, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (105, 62, '2026-01-05 13:22:19', '192.168.1.102', '个人感觉有点发酵,不过还行', 'approved', 'zzt', 6, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (106, 62, '2026-01-05 13:39:18', '120.235.59.235', '我评论一下', 'approved', 'zzt', 6, '中国|广东省|东莞市|移动', 0);
+INSERT INTO `t_comment` VALUES (107, 30, '2026-01-05 13:46:55', '192.168.1.102', '现在我应该是本地局域网', 'approved', '我不是马神', 10, '本地局域网', 0);
 INSERT INTO `t_comment` VALUES (108, 30, '2026-01-05 13:48:31', '120.235.59.235', '我现在应该是东莞', 'approved', '王德志', NULL, '中国|广东省|东莞市|移动', 0);
 INSERT INTO `t_comment` VALUES (109, 30, '2026-01-05 13:48:47', '141.11.146.76', '我现在应该是香港', 'approved', '王德志', NULL, '法国|0|0|法国电信', 0);
 INSERT INTO `t_comment` VALUES (110, 30, '2026-01-05 13:49:44', '141.11.146.76', '奇怪', 'approved', '王德志', NULL, '法国|0|0|法国电信', 0);
 INSERT INTO `t_comment` VALUES (111, 30, '2026-01-05 13:49:55', '141.11.146.76', '现在在哪', 'approved', '王德志', NULL, '法国|0|0|法国电信', 0);
-INSERT INTO `t_comment` VALUES (112, 59, '2026-01-05 22:49:17', '192.168.1.102', '神人特朗普', 'approved', '我不是马神', NULL, '本地局域网', 0);
-INSERT INTO `t_comment` VALUES (113, 59, '2026-01-05 23:01:01', '192.168.1.102', '美帝国主义之心人人诛之', 'approved', 'tom', NULL, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (112, 59, '2026-01-05 22:49:17', '192.168.1.102', '神人特朗普', 'approved', '我不是马神', 10, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (113, 59, '2026-01-05 23:01:01', '192.168.1.102', '美帝国主义之心人人诛之', 'approved', 'tom', 4, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (114, 65, '2026-01-07 16:12:13', '111.55.210.235', '123', 'approved', '王德发', 8, '中国|0|0|移动', 0);
+INSERT INTO `t_comment` VALUES (115, 65, '2026-01-07 16:25:47', '141.11.146.77', '为什么评论看不到头像', 'approved', '王德发', 8, '法国|0|0|法国电信', 0);
+INSERT INTO `t_comment` VALUES (116, 65, '2026-01-07 21:23:56', '192.168.1.101', '我来发布一个新评论', 'approved', '王德发', 8, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (117, 65, '2026-01-07 21:28:21', '192.168.1.101', '123', 'approved', '王德发', 8, '本地局域网', 0);
+INSERT INTO `t_comment` VALUES (118, 65, '2026-01-07 21:30:20', '192.168.1.101', '123', 'approved', '王德发', 8, '本地局域网', 0);
 
 -- ----------------------------
 -- Table structure for t_comment_like
@@ -453,7 +460,7 @@ CREATE TABLE `t_op_log`  (
   `target_id` int NULL DEFAULT NULL COMMENT '关联的目标ID，如文章ID',
   `created` datetime NOT NULL COMMENT '操作时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 508 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户操作日志表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 543 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户操作日志表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_op_log
@@ -958,6 +965,41 @@ INSERT INTO `t_op_log` VALUES (504, 8, 'BROWSE', '浏览了文章: 2026.01.04工
 INSERT INTO `t_op_log` VALUES (505, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 04:26:31');
 INSERT INTO `t_op_log` VALUES (506, 8, 'BROWSE', '浏览了文章: 美方披露抓获马杜罗更多细节', 56, '2026-01-07 04:26:35');
 INSERT INTO `t_op_log` VALUES (507, 8, 'BROWSE', '浏览了文章: 咖啡', 62, '2026-01-07 04:26:38');
+INSERT INTO `t_op_log` VALUES (508, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 04:29:52');
+INSERT INTO `t_op_log` VALUES (509, 8, 'BROWSE', '浏览了文章: 咖啡', 62, '2026-01-07 14:13:02');
+INSERT INTO `t_op_log` VALUES (510, 8, 'BROWSE', '浏览了文章: MOONARY', 41, '2026-01-07 14:14:54');
+INSERT INTO `t_op_log` VALUES (511, 8, 'BROWSE', '浏览了文章: 咖啡', 62, '2026-01-07 16:05:17');
+INSERT INTO `t_op_log` VALUES (512, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 16:12:08');
+INSERT INTO `t_op_log` VALUES (513, 8, 'COMMENT', '评论了文章: 123', 65, '2026-01-07 16:12:13');
+INSERT INTO `t_op_log` VALUES (514, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 16:25:03');
+INSERT INTO `t_op_log` VALUES (515, 8, 'COMMENT', '评论了文章: 为什么评论看不到头像', 65, '2026-01-07 16:25:47');
+INSERT INTO `t_op_log` VALUES (516, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 20:22:27');
+INSERT INTO `t_op_log` VALUES (517, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 20:30:38');
+INSERT INTO `t_op_log` VALUES (518, 8, 'BROWSE', '浏览了文章: IP测试', 30, '2026-01-07 20:30:46');
+INSERT INTO `t_op_log` VALUES (519, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 20:41:27');
+INSERT INTO `t_op_log` VALUES (520, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 20:55:03');
+INSERT INTO `t_op_log` VALUES (521, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:04:36');
+INSERT INTO `t_op_log` VALUES (522, 8, 'BROWSE', '浏览了文章: 有个奇怪的bug', 24, '2026-01-07 21:10:09');
+INSERT INTO `t_op_log` VALUES (523, 8, 'BROWSE', '浏览了文章: 有个奇怪的bug', 24, '2026-01-07 21:11:00');
+INSERT INTO `t_op_log` VALUES (524, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:23:44');
+INSERT INTO `t_op_log` VALUES (525, 8, 'COMMENT', '评论了文章: 我来发布一个新评论', 65, '2026-01-07 21:23:56');
+INSERT INTO `t_op_log` VALUES (526, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:27:51');
+INSERT INTO `t_op_log` VALUES (527, 8, 'COMMENT', '评论了文章: 123', 65, '2026-01-07 21:28:21');
+INSERT INTO `t_op_log` VALUES (528, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:30:18');
+INSERT INTO `t_op_log` VALUES (529, 8, 'COMMENT', '评论了文章: 123', 65, '2026-01-07 21:30:20');
+INSERT INTO `t_op_log` VALUES (530, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:31:51');
+INSERT INTO `t_op_log` VALUES (531, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:33:09');
+INSERT INTO `t_op_log` VALUES (532, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:38:55');
+INSERT INTO `t_op_log` VALUES (533, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:39:15');
+INSERT INTO `t_op_log` VALUES (534, 8, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:39:22');
+INSERT INTO `t_op_log` VALUES (535, 8, 'BROWSE', '浏览了文章: IP测试', 30, '2026-01-07 21:39:36');
+INSERT INTO `t_op_log` VALUES (536, 5, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:40:58');
+INSERT INTO `t_op_log` VALUES (537, 5, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:42:37');
+INSERT INTO `t_op_log` VALUES (538, 5, 'BROWSE', '浏览了文章: 美方披露抓获马杜罗更多细节', 56, '2026-01-07 21:42:53');
+INSERT INTO `t_op_log` VALUES (539, 5, 'BROWSE', '浏览了文章: 美方披露抓获马杜罗更多细节', 56, '2026-01-07 21:42:57');
+INSERT INTO `t_op_log` VALUES (540, 5, 'BROWSE', '浏览了文章: 国际社会强烈谴责美国对委内瑞拉的军事行动（国际视点）', 59, '2026-01-07 21:43:12');
+INSERT INTO `t_op_log` VALUES (541, 5, 'BROWSE', '浏览了文章: 2025.01.06工作总结', 65, '2026-01-07 21:43:14');
+INSERT INTO `t_op_log` VALUES (542, 5, 'BROWSE', '浏览了文章: IP测试', 30, '2026-01-07 21:43:19');
 
 -- ----------------------------
 -- Table structure for t_reply
@@ -976,7 +1018,7 @@ CREATE TABLE `t_reply`  (
   `location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'IP属地',
   `likes` int NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 55 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '子评论/回复表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 58 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '子评论/回复表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_reply
@@ -1033,6 +1075,9 @@ INSERT INTO `t_reply` VALUES (51, '再看看现在', '王德志', '2026-01-05 13
 INSERT INTO `t_reply` VALUES (52, '123', '李四', '2026-01-06 15:42:56', 106, NULL, NULL, 2, '120.235.59.235', '中国|广东省|东莞市|移动', 0);
 INSERT INTO `t_reply` VALUES (53, '456', '王德志', '2026-01-07 03:21:34', 106, NULL, 2, 8, '192.168.1.102', '本地局域网', 0);
 INSERT INTO `t_reply` VALUES (54, '哇塞', '王德发', '2026-01-07 04:26:45', 106, NULL, 8, 8, '192.168.1.102', '本地局域网', 0);
+INSERT INTO `t_reply` VALUES (55, '我现在来回复你一下', '王德发', '2026-01-07 16:25:16', 114, NULL, NULL, 8, '141.11.146.77', '法国|0|0|法国电信', 0);
+INSERT INTO `t_reply` VALUES (56, '我来试试emoji功能😊', '王德发', '2026-01-07 20:22:52', 115, NULL, NULL, 8, '192.168.1.101', '本地局域网', 0);
+INSERT INTO `t_reply` VALUES (57, '？？？', '王德顺', '2026-01-07 21:39:09', 116, NULL, NULL, 8, '192.168.1.101', '本地局域网', 0);
 
 -- ----------------------------
 -- Table structure for t_reply_like
@@ -1091,13 +1136,13 @@ INSERT INTO `t_statistic` VALUES (17, 17, 4, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (18, 21, 17, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (19, 22, 33, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (20, 23, 26, 0, 0, 0, 0, 0, 0);
-INSERT INTO `t_statistic` VALUES (21, 24, 32, 0, 0, 0, 0, 0, 0);
+INSERT INTO `t_statistic` VALUES (21, 24, 34, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (22, 25, 7, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (23, 26, 6, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (24, 27, 11, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (25, 28, 24, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (26, 29, 7, 0, 0, 0, 0, 0, 0);
-INSERT INTO `t_statistic` VALUES (27, 30, 60, 0, 0, 0, 0, 0, 0);
+INSERT INTO `t_statistic` VALUES (27, 30, 63, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (28, 16, 1, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (29, 31, 4, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (30, 32, 1, 0, 0, 0, 0, 0, 0);
@@ -1105,18 +1150,18 @@ INSERT INTO `t_statistic` VALUES (31, 33, 2, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (32, 34, 7, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (33, 35, 3, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (34, 36, 6, 0, 0, 0, 0, 0, 0);
-INSERT INTO `t_statistic` VALUES (35, 37, 10, 0, 0, 0, 0, 0, 0);
+INSERT INTO `t_statistic` VALUES (35, 37, 11, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (36, 38, 5, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (37, 39, 7, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (38, 40, 10, 0, 0, 0, 0, 0, 0);
-INSERT INTO `t_statistic` VALUES (39, 41, 127, 0, 7, 0, 0, 0, 0);
+INSERT INTO `t_statistic` VALUES (39, 41, 128, 0, 7, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (40, 42, 37, 0, 0, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (52, 54, 9, 0, 1, 0, 0, 0, 0);
 INSERT INTO `t_statistic` VALUES (53, 55, 10, 0, 4, 0, 0, 0, 0);
-INSERT INTO `t_statistic` VALUES (54, 56, 3, 0, 0, 0, 0, 0, 0);
-INSERT INTO `t_statistic` VALUES (57, 59, 6, 0, 0, 0, 0, 0, 0);
-INSERT INTO `t_statistic` VALUES (60, 62, 22, 0, 3, 0, 0, 0, 0);
-INSERT INTO `t_statistic` VALUES (63, 65, 1, 0, 0, 0, 0, 0, 0);
+INSERT INTO `t_statistic` VALUES (54, 56, 5, 0, 0, 0, 0, 0, 0);
+INSERT INTO `t_statistic` VALUES (57, 59, 7, 0, 0, 0, 0, 0, 0);
+INSERT INTO `t_statistic` VALUES (60, 62, 24, 0, 3, 0, 0, 0, 0);
+INSERT INTO `t_statistic` VALUES (63, 65, 28, 0, 0, 0, 0, 0, 0);
 
 -- ----------------------------
 -- Table structure for t_tag
@@ -1177,14 +1222,14 @@ INSERT INTO `t_tag` VALUES (38, '香港');
 DROP TABLE IF EXISTS `t_user`;
 CREATE TABLE `t_user`  (
   `id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
-  `password` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
-  `email` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
-  `avatar` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '用户头像',
+  `username` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `password` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `email` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户头像',
   `created` datetime NULL DEFAULT NULL,
   `valid` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_user
@@ -1194,9 +1239,9 @@ INSERT INTO `t_user` VALUES (2, '李四', '$2a$10$5ooQI8dir8jv0/gCa1Six.GpzAdIPf
 INSERT INTO `t_user` VALUES (3, '东方不败', '$2a$10$5ooQI8dir8jv0/gCa1Six.GpzAdIPf6pMqdminZ/3ijYzivCyPlfK', '13718391550@163.com', NULL, '2018-12-18 00:00:00', 1);
 INSERT INTO `t_user` VALUES (4, 'tom', '$2a$10$5ooQI8dir8jv0/gCa1Six.GpzAdIPf6pMqdminZ/3ijYzivCyPlfK', 'asexeees@sohu.com', NULL, '2018-12-03 00:00:00', 1);
 INSERT INTO `t_user` VALUES (5, '123', '$2a$10$.M5V2dSiG0FWYyB4JfqsqOgeFmoPFzUgHQRjpyuDJ/IKcJsses0xq', '123456@qq.com', NULL, '2025-12-09 00:00:00', 1);
-INSERT INTO `t_user` VALUES (6, 'zzt', '$2a$10$zZ5vFs0ArzFW6.yUay/8iOaHk5.XgLspxH0AX2osoQ.CW.gEaBbu.', '12345677@qq.com', NULL, '2025-12-17 00:00:00', 1);
+INSERT INTO `t_user` VALUES (6, 'zzt', '$2a$10$zZ5vFs0ArzFW6.yUay/8iOaHk5.XgLspxH0AX2osoQ.CW.gEaBbu.', '12345677@qq.com', '/api/file/images/414c2b1a-101e-4f27-ae3a-148293c04d7b.jpg', '2025-12-17 00:00:00', 1);
 INSERT INTO `t_user` VALUES (7, '尊贵的iPhone17ProMax用户', '$2a$10$Bs9s8O8jyKY03YbQAw5rfetElexv8KBHWrCRUB2ZzYX6p/MJ2s.8O', 'wannamanymanymoney@gmail.com', NULL, '2026-01-04 00:00:00', 1);
-INSERT INTO `t_user` VALUES (8, '王德发', '$2a$10$axeG8E1aB/95BmasLaN7O.OnjheQ85UU/xJGNPvDUSGvWT.EFz2am', '2765309445@qq.com', '/api/file/images/1c031250-849f-4f5f-9295-b24be6e61391.jpg', '2026-01-05 23:10:45', 1);
+INSERT INTO `t_user` VALUES (8, '王德顺', '$2a$10$axeG8E1aB/95BmasLaN7O.OnjheQ85UU/xJGNPvDUSGvWT.EFz2am', '2765309445@qq.com', '/api/file/images/414c2b1a-101e-4f27-ae3a-148293c04d7b.jpg', '2026-01-05 23:10:45', 1);
 INSERT INTO `t_user` VALUES (9, '机器人', '$2a$10$bmJKkp.qEMAHEghnCUH9OOvM1YgRR.k3GHCQgKRbeZM8fvxcceS4a', 'zzt57502@gmail.com', NULL, '2026-01-05 00:00:00', 1);
 INSERT INTO `t_user` VALUES (10, '我不是马神', '$2a$10$nC.nReCreYVwMqhr0mdCN.6AxbMuHRNpKAWuLc5Bp23C17RVe8G3S', 'zzt1638415095@gmail.com', NULL, '2026-01-05 00:00:00', 1);
 INSERT INTO `t_user` VALUES (11, '123hhk', '$2a$10$QCEmW8g175odIFUf6CSTxeM2l8Z2djQgznGXluVrkZD3tyhGvnela', '2492817172@qq.com', NULL, '2026-01-05 00:00:00', 1);

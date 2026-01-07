@@ -1,5 +1,6 @@
 package llp.spring.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import llp.spring.entity.User;
 import llp.spring.entity.dto.UserDTO;
 import llp.spring.mapper.UserMapper;
@@ -20,6 +21,9 @@ import org.springframework.beans.BeanUtils; // 【新增】用于对象属性拷
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.concurrent.TimeUnit; // 【新增】解决找不到符号 TimeUnit
 
+import com.wf.captcha.SpecCaptcha; // EasyCaptcha
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api/user")
@@ -187,5 +191,51 @@ public class UserController {
         result.setSuccess(false);
         result.setErrorMessage("未登录或会话已过期");
         return result;
+    }
+
+    // 1. 【新增】图形验证码接口
+    @RequestMapping("/captcha")
+    public void captcha(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        SpecCaptcha specCaptcha = new SpecCaptcha(130, 48, 4);
+        String verCode = specCaptcha.text().toLowerCase();
+        String key = request.getParameter("key"); // 前端生成的唯一标识
+        if (StringUtils.hasText(key)) {
+            // 存入 Redis，5分钟有效
+            redisTemplate.opsForValue().set("captcha:" + key, verCode, 5, TimeUnit.MINUTES);
+        }
+        specCaptcha.out(response.getOutputStream());
+    }
+
+    // 2. 【新增】忘记密码 - 重置密码
+    @PostMapping("/resetPassword")
+    public Result resetPassword(@RequestBody UserDTO userDTO) {
+        // 1. 校验邮箱验证码
+        String key = "verify_code:" + userDTO.getEmail();
+        String cachedCode = redisTemplate.opsForValue().get(key);
+        if (cachedCode == null || !cachedCode.equals(userDTO.getCode())) {
+            return new Result(false, "验证码错误或已过期");
+        }
+
+        // 2. 查询用户
+        User user = userService.selectByUsername(userDTO.getUsername()); // 这里也可以用 email 查，看前端传什么
+        if (user == null) {
+            // 尝试用邮箱查
+            QueryWrapper<User> wrapper = new QueryWrapper<>();
+            wrapper.eq("email", userDTO.getEmail());
+            user = userMapper.selectOne(wrapper);
+        }
+
+        if (user == null) {
+            return new Result(false, "用户不存在");
+        }
+
+        // 3. 重置密码 (这里简单处理，实际项目应加密)
+        // user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        user.setPassword(userDTO.getPassword());
+
+        userService.updateById(user);
+        redisTemplate.delete(key);
+
+        return new Result(true, "密码重置成功");
     }
 }

@@ -15,7 +15,12 @@ public interface CommentMapper extends BaseMapper<Comment> {
     List<Comment> selectByArticleId(Integer articleId);
 
     // 2. 根据文章ID分页查评论 (前台用)
-    @Select("SELECT * FROM t_comment WHERE article_id = #{articleId} ORDER BY id DESC limit #{offset} , #{size}")
+    // 原 SQL: SELECT * FROM t_comment WHERE article_id = #{articleId} ORDER BY id DESC limit #{offset} , #{size}
+    // 修改为:
+    @Select("SELECT c.*, u.avatar FROM t_comment c " +
+            "LEFT JOIN t_user u ON c.user_id = u.id " +
+            "WHERE c.article_id = #{articleId} " +
+            "ORDER BY c.id DESC limit #{offset}, #{size}")
     List<Comment> getAPageCommentByArticleId(
             @Param("articleId") Integer articleId,
             @Param("offset") Integer offset,
@@ -53,21 +58,25 @@ public interface CommentMapper extends BaseMapper<Comment> {
     // 5. 个人中心/管理后台 - 根据作者查询 (修复后)
     // 关键修复：添加 'article_id as articleId' 和 关联查询回复所属的文章ID
 
+    // 【修改点 3：根据 userId 查询评论与回复】
+    // 原方法名: selectCommentsByAuthor(@Param("author") String author)
+    // 修改为:
     @Select("SELECT id, content, author, created, 'COMMENT' as type, " +
-            "article_id as articleId, " + // 【修复】添加 articleId
+            "article_id as articleId, " +
             "article_id as refId, " +
             "(SELECT title FROM t_article WHERE id = t_comment.article_id) as targetName " +
-            "FROM t_comment WHERE author = #{author} " +
+            "FROM t_comment " +
+            "WHERE user_id = #{userId} " +  // 👈 关键：改为 user_id
             "UNION ALL " +
             "SELECT r.id, r.content, r.author, r.created, 'REPLY' as type, " +
-            "c.article_id as articleId, " + // 【修复】通过父评论找到文章ID
+            "c.article_id as articleId, " +
             "r.comment_id as refId, " +
-            "c.content as targetName " + // 回复的目标名称显示为父评论内容
+            "c.content as targetName " +
             "FROM t_reply r " +
-            "LEFT JOIN t_comment c ON r.comment_id = c.id " + // 【修复】关联父评论表
-            "WHERE r.author = #{author} " +
+            "LEFT JOIN t_comment c ON r.comment_id = c.id " +
+            "WHERE r.user_id = #{userId} " + // 👈 关键：改为 user_id (假设回复表也有 user_id)
             "ORDER BY created DESC")
-    List<UserCommentVO> selectCommentsByAuthor(@Param("author") String author);
+    List<UserCommentVO> selectCommentsByUserId(@Param("userId") Integer userId);
 
     // 1. 【合并查询】支持按 author 筛选的动态 SQL
     @Select("<script>" +
@@ -106,6 +115,11 @@ public interface CommentMapper extends BaseMapper<Comment> {
             "(SELECT COUNT(*) FROM t_reply <where><if test='author!=null and author!=\"\"'>author=#{author}</if></where>)" +
             "</script>")
     Integer countAdminComments(@Param("author") String author);
+
+    // 【新增】获取我点赞的评论
+    @Select("SELECT c.id, c.content, c.author, c.created, 'COMMENT' as type, c.article_id as articleId, c.article_id as refId, (SELECT title FROM t_article WHERE id = c.article_id) as targetName " +
+            "FROM t_comment c JOIN t_comment_like l ON c.id = l.comment_id WHERE l.user_id = #{userId} ORDER BY c.created DESC")
+    List<UserCommentVO> getMyLikedComments(@Param("userId") Integer userId);
 
     // === 【新增】点赞相关方法 ===
     @Update("UPDATE t_comment SET likes = likes + 1 WHERE id = #{commentId}")
