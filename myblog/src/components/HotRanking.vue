@@ -4,6 +4,13 @@ import { defineProps, inject, ref } from 'vue'
 import { Trophy, StarFilled, View, Top, Bottom, Minus } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router' // 如果需要跳转
 
+
+// 引入组件
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+// 引入具体图标
+import { faThumbsUp, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+
+
 // 接收两个列表数据
 const props = defineProps({
   readList: { type: Array, default: () => [] }, // 阅读榜数据
@@ -28,9 +35,7 @@ function gotoArticle(article) {
       </div>
       <div class="divider">|</div>
       <div class="tab-item" :class="{ active: currentTab === 'like' }" @click="currentTab = 'like'">
-        <el-icon>
-          <StarFilled />
-        </el-icon> 点赞榜
+        <font-awesome-icon :icon="faThumbsUp" /> 点赞榜
       </div>
     </div>
 
@@ -74,9 +79,7 @@ function gotoArticle(article) {
                 </el-icon> {{ article.hits || 0 }}
               </template>
               <template v-else>
-                <el-icon>
-                  <StarFilled />
-                </el-icon> {{ article.likes || 0 }}
+                <font-awesome-icon :icon="faThumbsUp" /> {{ article.likes || 0 }}
               </template>
             </div>
           </div>

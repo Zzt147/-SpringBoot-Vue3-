@@ -2,8 +2,14 @@
 import { reactive, ref, inject, onMounted, nextTick } from 'vue'
 import { useStore } from '@/stores/my'
 import { ElMessage } from 'element-plus'
-import { dateFormat } from '../js/tool' // 确保你的 tool.js 有这个方法
-import { Sugar, LocationInformation } from '@element-plus/icons-vue' // 引入图标
+import { dateFormat } from '../js/tool'
+import { Sugar, LocationInformation } from '@element-plus/icons-vue'
+
+// 引入组件
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+// 引入具体图标
+import { faThumbsUp, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+
 // 接收父组件传递的参数
 const props = defineProps(['comment', 'floor'])
 
@@ -13,22 +19,21 @@ const axios = inject('axios')
 // --- 子评论(回复)相关数据 ---
 const replies = ref([])
 const replyPage = ref(1)
-const replyRows = ref(5) // 每页显示几条回复
+const replyRows = ref(5)
 const replyTotal = ref(0)
-const showAllReplies = ref(false) // 是否展开所有回复
+const showAllReplies = ref(false)
 
 // 回复输入框控制
 const showReplyInput = ref(false)
 const replyContent = ref('')
 const replyPlaceholder = ref('回复层主...')
-const currentTargetUid = ref(null) // 记录要回复的目标用户ID (null代表回复层主)
+const currentTargetUid = ref(null)
 
 // 回复输入框 Ref
-const replyInputRef = ref(null) // 【新增】
+const replyInputRef = ref(null)
 
 // 加载子评论
 function loadReplies() {
-  // 增加时间戳防止缓存
   axios.get(`/api/reply/getReplies?commentId=${props.comment.id}&page=${replyPage.value}&rows=${replyRows.value}&_t=${new Date().getTime()}`)
     .then(res => {
       if (res.data.success) {
@@ -42,11 +47,9 @@ function loadReplies() {
 // 展开/折叠回复
 function toggleReplies() {
   if (!showAllReplies.value) {
-    // 展开：加载更多
-    replyRows.value = 100 // 或者设置一个较大的数
+    replyRows.value = 100
     loadReplies()
   } else {
-    // 折叠：恢复默认
     replyRows.value = 5
     loadReplies()
   }
@@ -54,7 +57,6 @@ function toggleReplies() {
 }
 
 // 点击"回复"按钮 (准备回复)
-// targetUser: 目标用户对象 (如果传null，表示回复层主)
 async function prepareReply(targetUser) {
   // 1. 检查登录
   if (!store.user.user) {
@@ -64,10 +66,10 @@ async function prepareReply(targetUser) {
 
   // 2. 设置目标
   if (targetUser) {
-    currentTargetUid.value = targetUser.id  // 记录目标ID (后端需要这个字段)
+    currentTargetUid.value = targetUser.id
     replyPlaceholder.value = `回复 @${targetUser.username}:`
   } else {
-    currentTargetUid.value = null // 回复层主（后端可能默认处理）
+    currentTargetUid.value = null // 回复层主
     replyPlaceholder.value = `回复 @${props.comment.author}:`
   }
 
@@ -75,7 +77,7 @@ async function prepareReply(targetUser) {
   showReplyInput.value = true
   replyContent.value = ""
 
-  // 【新增】等待 DOM 更新后自动聚焦
+  // 等待 DOM 更新后自动聚焦
   await nextTick()
   if (replyInputRef.value) {
     replyInputRef.value.focus()
@@ -92,8 +94,8 @@ function sendReply() {
   let param = {
     content: replyContent.value,
     commentId: props.comment.id,
-    userId: store.user.user.id, // 发送者ID
-    toUid: currentTargetUid.value // 【关键修复】带上目标用户ID
+    userId: store.user.user.id,
+    toUid: currentTargetUid.value
   }
 
   axios.post('/api/reply/insert', param)
@@ -102,7 +104,6 @@ function sendReply() {
         ElMessage.success("回复成功")
         showReplyInput.value = false
         replyContent.value = ""
-        // 重新加载回复列表
         loadReplies()
       } else {
         ElMessage.error(res.data.msg || "回复失败")
@@ -118,7 +119,7 @@ onMounted(() => {
   }
 })
 
-// 通用的点赞函数，支持主评论和回复
+// 通用的点赞函数
 function likeTargetComment(commentObj) {
   if (!store.user.user) {
     ElMessage.warning("请先登录")
@@ -150,25 +151,33 @@ function likeTargetComment(commentObj) {
       <div class="content-box">
         <div class="user-info">
           <span class="username">{{ comment.author }}</span>
-          <span class="floor-tag">#{{ floor }}楼</span>
+          <span class="floor-tag" v-if="floor">#{{ floor }}楼</span>
         </div>
         <div class="comment-text">{{ comment.content }}</div>
+
         <div class="comment-actions">
-          <span class="time-text">{{ dateFormat(comment.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
-          <span class="location-text" v-if="comment.location" style="margin-left: 10px; color: #999; font-size: 12px;">
-            <el-icon size="12" style="margin-right: 2px">
-              <LocationInformation />
-            </el-icon>
-            {{ comment.location }}
-          </span>
-          <span class="action-btn" @click="likeTargetComment(comment)" style="display:inline-flex; align-items:center;">
-            <el-icon style="margin-right:2px">
-              <Sugar />
-            </el-icon>
-            {{ comment.likes || 0 }}
-          </span>
-          <span class="action-btn" @click="prepareReply(null)">回复</span>
+          <div class="actions-group">
+            <span class="time-text">{{ dateFormat(comment.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
+            <span class="location-text" v-if="comment.location" style="color: #999; font-size: 12px;">
+              <el-icon size="12" style="margin-right: 2px">
+                <LocationInformation />
+              </el-icon>
+              {{ comment.location }}
+            </span>
+          </div>
+
+          <div class="actions-group">
+            <span class="action-item like-action" @click="likeTargetComment(comment)">
+              <font-awesome-icon :icon="faThumbsUp" :class="{ 'liked': comment.likes > 0 }" />
+              <span class="action-text">{{ comment.likes || 0 }}</span>
+            </span>
+            <span class="action-item reply-action" @click="prepareReply(null)">
+              <font-awesome-icon :icon="faCommentDots" style="margin-right: 4px;" />
+              <span class="action-text">回复</span>
+            </span>
+          </div>
         </div>
+
       </div>
     </div>
 
@@ -176,34 +185,37 @@ function likeTargetComment(commentObj) {
       <div v-for="reply in replies" :key="reply.id" class="reply-item">
         <div class="reply-line">
           <img class="mini-avatar" :src="reply.avatar || '/api/images/default.png'" />
-
           <span class="reply-user">{{ reply.username }}</span>
-
           <span v-if="reply.targetName" style="color: #409EFF; margin: 0 4px; font-size: 12px;">
             回复 @{{ reply.targetName }} :
           </span>
           <span v-else class="reply-colon"> : </span>
-
-          <span class="reply-text">{{ reply.content }}</span>
         </div>
 
+        <div class="reply-text">{{ reply.content }}</div>
+
         <div class="reply-actions">
-          <span class="time-text">{{ dateFormat(reply.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
-          <span class="location-text" v-if="reply.location" style="margin-left: 10px; color: #999; font-size: 12px;">
-            <el-icon size="12" style="margin-right: 2px">
-              <LocationInformation />
-            </el-icon>
-            {{ reply.location }}
-          </span>
-          <span class="action-btn" @click="likeTargetComment(reply)" style="display:inline-flex; align-items:center;">
-            <el-icon size="12" style="margin-right:2px">
-              <Sugar />
-            </el-icon>
-            {{ reply.likes || 0 }}
-          </span>
-          <span class="action-btn" @click="prepareReply({ id: reply.userId, username: reply.username })">
-            回复
-          </span>
+          <div class="actions-group">
+            <span class="time-text">{{ dateFormat(reply.created, 'yyyy-MM-dd HH:mm:ss') }}</span>
+            <span class="location-text" v-if="reply.location" style="color: #999; font-size: 12px;">
+              <el-icon size="12" style="margin-right: 2px">
+                <LocationInformation />
+              </el-icon>
+              {{ reply.location }}
+            </span>
+          </div>
+
+          <div class="actions-group">
+            <span class="action-btn" @click="likeTargetComment(reply)" :class="{ 'liked': reply.likes > 0 }"
+              style="display:inline-flex; align-items:center;">
+              <font-awesome-icon :icon="faThumbsUp" style="margin-right: 4px;" />
+              {{ reply.likes || 0 }}
+            </span>
+            <span class="action-btn" @click="prepareReply({ id: reply.userId, username: reply.username })">
+              <font-awesome-icon :icon="faCommentDots" style="margin-right: 4px;" />
+              回复
+            </span>
+          </div>
         </div>
       </div>
 
@@ -270,15 +282,10 @@ function likeTargetComment(commentObj) {
   word-break: break-all;
 }
 
-.comment-actions {
-  font-size: 12px;
-  color: #999;
-}
-
 .action-btn {
   margin-left: 15px;
   cursor: pointer;
-  color: #666;
+  color: #999;
   display: inline-flex;
   align-items: center;
 }
@@ -325,7 +332,12 @@ function likeTargetComment(commentObj) {
 }
 
 .reply-text {
-  color: #555;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 8px;
+  word-break: break-all;
+  padding-left: 26px;
 }
 
 .reply-actions {
@@ -348,5 +360,91 @@ function likeTargetComment(commentObj) {
   background: #fff;
   border: 1px solid #ebeef5;
   border-radius: 4px;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 8px;
+  color: #9499a0;
+  font-size: 14px;
+  user-select: none;
+}
+
+.action-item {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.action-item:hover {
+  color: #409EFF;
+}
+
+.liked {
+  color: #409EFF;
+}
+
+.action-text {
+  margin-left: 5px;
+}
+
+/* ✅ 【修改】主评论操作栏样式 */
+.comment-actions {
+  display: flex;
+  justify-content: space-between;
+  /* 左右两端对齐 */
+  align-items: center;
+  margin-top: 8px;
+  color: #9499a0;
+  font-size: 14px;
+  user-select: none;
+}
+
+/* ✅ 【修改】子回复操作栏样式 */
+.reply-actions {
+  font-size: 12px;
+  color: #aaa;
+  padding-left: 30px;
+  /* 增加 Flex 布局以支持两端对齐 */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ✅ 【新增】通用分组样式，用于控制组内元素间距 */
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  /* 控制 时间-位置 或 点赞-回复 之间的间距 */
+}
+
+.action-item,
+.action-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.action-item:hover,
+.action-btn:hover {
+  color: #409EFF;
+}
+
+.liked {
+  color: #409EFF;
+}
+
+.action-text {
+  margin-left: 5px;
+}
+
+.action-btn {
+  margin-left: 0;
+  /* 重置可能存在的 margin */
 }
 </style>

@@ -18,4 +18,8 @@ public class ArticleVO {
     // ✅【新增】作者头像
     private String authorAvatar;
     private String authorName;  // 作者姓名
+    // === 【新增修复】补充缺失字段，解决标签筛选时信息丢失问题 ===
+    private String thumbnail;   // 文章缩略图
+    private String author;      // 兼容前端显示的作者字段
+    private String location;    // 发布位置
 }

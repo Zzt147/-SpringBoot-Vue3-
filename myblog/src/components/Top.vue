@@ -1,5 +1,5 @@
 <script setup>
-import { ref, inject, onMounted, onUnmounted } from 'vue'
+import { ref, inject, onMounted, onUnmounted, computed } from 'vue'
 import { useStore } from '@/stores/my'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { Search, Bell } from '@element-plus/icons-vue' // 引入 Bell 图标
@@ -17,6 +17,24 @@ const userName = ref("")
 const isLogined = ref(false)
 const unreadCount = ref(0) // 未读消息数
 const notificationList = ref([]) // 消息列表
+
+// === ✅【新增】判断是否是管理员 ===
+const isAdmin = computed(() => {
+  const u = store.user.user
+
+  // 方式 A：根据 ID 判断 (推荐，适用于个人博客)
+  // 假设数据库中 ID 为 1 的用户是站长
+  if (u && u.id === 1) {
+    return true
+  }
+
+  // 方式 B：如果你后端登录接口返回了 roles 或 authorities
+  // if (u && u.roles && u.roles.includes('admin')) {
+  //   return true
+  // }
+
+  return false
+})
 
 // 检查是否已登录
 if (store.user.user != null) {
@@ -151,7 +169,7 @@ function toPersonalCenter() {
           </div>
         </el-popover>
         <a @click="goToLogin" v-if="!isLogined">登录</a>
-        <a @click="toAdminMain">后台管理</a>
+        <a @click="toAdminMain" v-if="isAdmin">后台管理</a>
         <a @click="toExit" v-if="isLogined">退出</a>
         <a @click="toPersonalCenter" v-if="isLogined">{{ userName }}</a>
         <router-link title="查询" :to="{ path: '/search' }" style="text-decoration: none;">

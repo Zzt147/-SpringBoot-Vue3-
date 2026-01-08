@@ -20,7 +20,12 @@ public interface ArticleMapper extends BaseMapper<Article> {
 
     public List<Article> getAPage(@Param("offset")long offset, @Param("size")long size);
 
-    @Select("SELECT a.id, a.title, a.content, a.created, a.categories, a.thumbnail, u.username AS authorName, s.hits " +
+    // 找到 articleSearch 方法，替换 @Select 注解的内容
+    @Select("SELECT a.id, a.title, a.content, a.created, a.categories, " +
+            "a.thumbnail, a.location, " +  // 1. 添加 thumbnail 和 location
+            "u.username AS authorName, " +
+            "u.username AS author, " +     // 2. 添加 author 别名，解决匿名问题
+            "s.hits, IFNULL(s.likes, 0) AS likes " + // 3. 顺便补全 likes
             "FROM t_article a " +
             "LEFT JOIN t_statistic s ON a.id = s.article_id " +
             "LEFT JOIN t_user u ON a.user_id = u.id " +
@@ -30,6 +35,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
     @Select("SELECT t_article.id, t_article.user_id, t_article.title, t_article.content, " +
             "t_article.created, t_article.modified, t_article.categories, t_article.tags, " +
             "t_article.thumbnail, t_article.allow_comment, " +
+            "t_article.location, " + // ✅ 【新增】添加这一行，查询定位字段
             "t_user.username AS authorName, " +
             "IFNULL(s.likes, 0) AS likes " +
             "FROM t_article " +

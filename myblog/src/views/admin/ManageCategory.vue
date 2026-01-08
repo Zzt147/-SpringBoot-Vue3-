@@ -3,7 +3,7 @@ import { ref, reactive, inject, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, Edit, Delete, Folder, FolderOpened, Rank,
-  Document, ArrowRight, DocumentAdd
+  Document, ArrowRight, DocumentAdd, Warning
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 
@@ -175,6 +175,50 @@ function gotoEdit(article) {
   ElMessage.info(`请前往"文章管理"页面编辑: ${article.title}`)
 }
 
+const deleteDialogVisible = ref(false)
+const deleteTarget = ref(null) // 当前要删除的分类对象
+
+// 点击删除按钮触发
+function handleDeleteClick(folder) {
+  deleteTarget.value = folder
+  deleteDialogVisible.value = true
+}
+
+// 执行删除
+function confirmDelete(mode) {
+  if (!deleteTarget.value) return
+
+  const modeText = mode === 2 ? "删除分类及其下所有文章" : "仅删除分类（文章移至父级）";
+
+  // 再次确认防止手误
+  // ElMessageBox.confirm(`确认执行操作：${modeText} ?`, '最终确认', { 
+  //   type: mode === 2 ? 'error' : 'warning',
+  //   confirmButtonText: '确定执行',
+  //   cancelButtonText: '取消'
+  // }).then(() => {
+  // 发送请求
+  const url = `/api/category/delete?id=${deleteTarget.value.id}&mode=${mode}`;
+  axios.post(url).then(res => {
+    if (res.data.success) {
+      ElMessage.success("操作成功");
+      deleteDialogVisible.value = false;
+      loadTree(); // 刷新左侧树
+      // 如果当前正好在看这个被删的分类，回退到父级或根目录
+      if (currentCategory.value && currentCategory.value.id === deleteTarget.value.id) {
+        currentCategory.value = null;
+        folderList.value = [];
+        articleList.value = [];
+      } else if (currentCategory.value) {
+        // 否则刷新当前视图
+        loadRightContent(currentCategory.value.id);
+      }
+    } else {
+      ElMessage.error(res.data.msg);
+    }
+  });
+  // }).catch(() => {});
+}
+
 </script>
 
 <template>
@@ -233,6 +277,7 @@ function gotoEdit(article) {
 
             <div v-for="folder in folderList" :key="'folder-' + folder.id" class="resource-item folder-item"
               @dblclick="enterFolder(folder)">
+
               <div class="item-icon folder-icon"><el-icon>
                   <Folder />
                 </el-icon></div>
@@ -240,9 +285,10 @@ function gotoEdit(article) {
                 <div class="item-name">{{ folder.name }}</div>
                 <div class="item-meta">子分类</div>
               </div>
+
               <div class="item-actions">
                 <el-button link :icon="Edit" @click="openDialog('edit', folder)">重命名</el-button>
-                <el-button link type="danger" :icon="Delete" @click="remove(folder)"></el-button>
+                <el-button link type="danger" :icon="Delete" @click="handleDeleteClick(folder)"></el-button>
               </div>
             </div>
 
@@ -268,6 +314,35 @@ function gotoEdit(article) {
 
       </el-container>
     </el-card>
+
+
+    <el-dialog v-model="deleteDialogVisible" title="删除分类确认" width="450px" align-center>
+      <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <el-icon :size="40" color="#F56C6C">
+          <Warning />
+        </el-icon>
+        <div>
+          <p style="font-size: 16px; font-weight: bold; margin: 0 0 10px 0;">
+            您正在删除分类：[{{ deleteTarget?.name }}]
+          </p>
+          <p style="color: #666; margin: 0;">请选择一种删除方式：</p>
+        </div>
+      </div>
+
+      <div class="delete-options">
+        <div class="delete-option-item" @click="confirmDelete(1)">
+          <div class="opt-title">1. 仅删除此分类</div>
+          <div class="opt-desc">保留名下文章，文章将自动移动到父级分类。</div>
+          <el-button type="primary" plain size="small" style="margin-top:8px;">执行此操作</el-button>
+        </div>
+
+        <div class="delete-option-item danger" @click="confirmDelete(2)">
+          <div class="opt-title">⚠️ 2. 删除分类及文章</div>
+          <div class="opt-desc">高危操作！该分类下的所有文章都将被永久删除。</div>
+          <el-button type="danger" size="small" style="margin-top:8px;">确认销毁</el-button>
+        </div>
+      </div>
+    </el-dialog>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="400px">
       <el-form :model="formData" :rules="rules" ref="formRef" label-width="80px">
@@ -449,5 +524,41 @@ function gotoEdit(article) {
   text-align: center;
   color: #999;
   padding: 40px;
+}
+
+/* 【新增】删除弹窗样式 */
+.delete-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.delete-option-item {
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.delete-option-item:hover {
+  border-color: #409EFF;
+  background-color: #f0f9eb;
+}
+
+.delete-option-item.danger:hover {
+  border-color: #F56C6C;
+  background-color: #fef0f0;
+}
+
+.opt-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.opt-desc {
+  font-size: 12px;
+  color: #909399;
 }
 </style>

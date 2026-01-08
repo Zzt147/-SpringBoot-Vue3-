@@ -8,6 +8,13 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useStore } from '@/stores/my'
 import { marked } from 'marked'
 import { LocationInformation, Close, StarFilled } from '@element-plus/icons-vue'
+// === 引入 FontAwesome ===
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { library } from '@fortawesome/fontawesome-svg-core';
+// 引入具体的图标：faThumbsUp(大拇指), faCommentDots(类似短信/气泡)
+import { faThumbsUp, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+
+library.add(faThumbsUp, faCommentDots)
 
 const route = useRoute();
 const axios = inject('axios');
@@ -277,13 +284,16 @@ function submit() {
             作者头像: {{ articleAndComment.article.authorAvatar }}
           </div>
           -->
-        <div class="meta-info">
+        <div class="meta-center">
           <span>发布于: {{ articleAndComment.article.created }}</span>
+        </div>
 
-          <span v-if="articleAndComment.article.location" style="margin-left: 15px;">
+        <div class="meta-right">
+          <span v-if="articleAndComment.article.location">
             <el-icon>
               <LocationInformation />
-            </el-icon> {{ articleAndComment.article.location }}
+            </el-icon>
+            {{ articleAndComment.article.location }}
           </span>
         </div>
       </div>
@@ -298,12 +308,11 @@ function submit() {
   </el-row>
 
   <el-row justify="center" style="margin: 40px 0;">
-    <el-button type="danger" circle size="large" @click="likeArticle">
-      <el-icon size="20">
-        <StarFilled />
-      </el-icon>
+    <el-button :type="articleAndComment.article.likes > 0 ? 'primary' : 'info'" circle size="large" @click="likeArticle"
+      style="width: 60px; height: 60px;">
+      <font-awesome-icon :icon="faThumbsUp" style="font-size: 26px;" />
     </el-button>
-    <span style="margin-left: 10px; line-height: 40px; font-size: 18px; color: #666;">
+    <span style="margin-left: 15px; line-height: 60px; font-size: 18px; color: #666;">
       {{ articleAndComment.article.likes || 0 }} 人觉得很赞
     </span>
   </el-row>
@@ -340,7 +349,7 @@ function submit() {
 
         <li v-for="(comment, index) in validComments" :key="comment.id" :id="'comment-' + comment.id"
           class="infinite-list-item">
-          <Comment :comment="comment" :floor="pageParams.sort === 'new' ? (commentTotal - index) : (index + 1)">
+          <Comment :comment="comment" :floor="pageParams.sort === 'new' ? (commentTotal - index) : null">
           </Comment>
         </li>
 
@@ -485,5 +494,66 @@ function submit() {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+/* 【修改】元数据栏布局样式 */
+.article-meta-bar {
+  position: relative;
+  /* 为绝对定位做参照 */
+  display: flex;
+  justify-content: space-between;
+  /* 左右贴边 */
+  align-items: center;
+  color: #999;
+  margin-bottom: 20px;
+  padding: 0 10px;
+  font-size: 14px;
+  height: 30px;
+}
+
+.meta-left {
+  display: flex;
+  align-items: center;
+  z-index: 2;
+  /* 防止被覆盖 */
+}
+
+.meta-center {
+  position: absolute;
+  /* 绝对定位到中间 */
+  left: 50%;
+  transform: translateX(-50%);
+  color: #666;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.meta-right {
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+/* ... 其他样式 ... */
+
+.markdown-body {
+  line-height: 1.8;
+  color: #333;
+}
+
+/* 【修改】图片自适应样式 */
+:deep(.markdown-body img) {
+  max-width: 100%;
+  /* 宽度不超过容器 */
+  height: auto;
+  /* 高度自动，保持比例 */
+  display: block;
+  /* 防止行内元素间隙 */
+  margin: 10px auto;
+  /* 居中显示 */
+  cursor: zoom-in;
+  transition: transform 0.2s;
+  border-radius: 4px;
+  /* 可选：圆角 */
 }
 </style>
