@@ -17,6 +17,8 @@ import org.springframework.security.core.GrantedAuthority; // 引入
 import org.springframework.security.core.userdetails.UserDetails; // 引入
 import java.util.Collection; // 引入
 import java.util.Collections; // 引入
+import java.util.List;
+
 /**
  * <p>
  * 
@@ -54,12 +56,12 @@ public class User implements Serializable, UserDetails {
     @TableField(exist = false)
     private Integer authorityId;
 
-    // 返回权限列表 (你可以暂时返回空，或者把之前的权限逻辑搬进来，这里简单处理)
+    // === 【修改 2】重写 getAuthorities 方法，返回上面的字段 ===
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList(); // 暂时返回空，如果不影响鉴权的话
+        // 如果字段为空，返回空列表，防止空指针异常
+        return authorities != null ? authorities : Collections.emptyList();
     }
-
     @Override
     public boolean isAccountNonExpired() { return true; }
 
@@ -71,4 +73,9 @@ public class User implements Serializable, UserDetails {
 
     @Override
     public boolean isEnabled() { return true; } // 这里应该关联你的 valid 字段
+
+    // === 【修改 1】新增 authorities 字段，用于存储角色信息 ===
+    @TableField(exist = false) // 告诉 MyBatis-Plus这不是数据库表的列
+    private List<GrantedAuthority> authorities;
+
 }

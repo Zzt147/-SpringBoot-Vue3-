@@ -321,7 +321,7 @@ const disabled = computed(() => loading.value || noMore.value)
     </el-col>
 
   </el-row>
-  <div class="fab-btn" @click="$router.push('/publish')">
+  <div v-if="store.user.user" class="fab-btn" @click="$router.push('/publish')">
     <el-icon size="24" color="white">
       <Plus />
     </el-icon>

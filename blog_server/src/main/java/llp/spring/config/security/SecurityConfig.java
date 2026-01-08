@@ -21,8 +21,8 @@ import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true) // 启用方法级别的权限认证
-public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配置
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private MyUserDetailsService myUserDetailsService;
@@ -39,79 +39,123 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .cors() // 开启跨域支持
+                .cors()
                 .and()
-                .csrf().disable() // 禁用CSRF，否则POST请求会被拦截
-                .headers().frameOptions().disable() // 防止H2控制台或iframe报错
+                .csrf().disable()
+                .headers().frameOptions().disable()
                 .and()
 
                 .authorizeRequests()
                 // ==========================================
-                // 1. 公开接口 (允许匿名访问，无需登录)
+                // 1. 公开接口 (游客权限)
                 // ==========================================
                 .antMatchers(
+                        // 静态资源
                         "/",
                         "/index.html",
                         "/assets/**",
                         "/favicon.ico",
-                        "/api/images/**",      // 图片
-                        "/api/article_img/**", // 文章图片
+                        "/api/images/**",
+                        "/api/article_img/**",
                         "/images/**",
                         "/file/images/**",
 
-                        // 文章公开接口
+                        // 文章查看
                         "/api/article/articleSearch",
                         "/api/article/getIndexData1",
                         "/api/article/getAPageOfArticle",
                         "/api/article/getIndexData",
                         "/api/article/getArticleAndFirstPageCommentByArticleId",
                         "/api/article/selectById",
+                        "/api/article/getAllTags",      // 标签云
+                        "/api/article/getLikeRanking",  // 点赞榜
+                        "/api/article/getReadRanking",  // 阅读榜
 
-                        // --- 修复开始：添加标签云和点赞榜接口 ---
-                        "/api/article/getAllTags",      // ✅ 标签云接口
-                        "/api/article/getLikeRanking",  // ✅ 点赞榜接口
-                        // --- 修复结束 ---
-
-                        // 评论公开接口
+                        // 评论查看
                         "/api/comment/getAPageCommentByArticleId",
-                        // 评论公开接口
+                        "/api/comment/getRecentComments",
+
+                        // 回复查看
                         "/api/reply/getReplies",
-                        // 分类公开接口
+
+                        // 分类查看
                         "/api/category/**",
 
-                        // 用户注册与验证
-                        "/api/user/register",      // 注册接口
-                        "/api/user/checkUsername", // 检查用户名
-                        "/api/user/sendEmailCode",  // 发送验证码接口
-
-                        // 【👇👇👇 新增下面这两行 👇👇👇】
-                        "/api/user/captcha",       // 放行图形验证码
-                        "/api/user/resetPassword"  // 放行重置密码
+                        // 用户相关
+                        "/api/user/register",
+                        "/api/user/checkUsername",
+                        "/api/user/sendEmailCode",
+                        "/api/user/captcha",
+                        "/api/user/resetPassword",
+                        "/api/user/getUserInfo",
+                        "/api/user/getPublicUserInfo"
                 )
                 .permitAll()
 
                 // ==========================================
-                // 2. 管理员权限
+                // 2. 管理员专属接口
                 // ==========================================
                 .antMatchers(
+                        // 后台管理接口
+                        "/api/admin/**",
+                        "/api/dashboard/**",
+
+                        // 管理功能
                         "/api/article/deleteById",
-                        "/api/article/getAPageOfArticleVO"
+                        "/api/article/getAPageOfArticleVO",
+                        "/api/article/getAllArticlesForAdmin",
+                        "/api/article/batchDelete",
+                        "/api/article/updateStatus",
+
+                        // 评论管理
+                        "/api/comment/getAllCommentsForAdmin",
+                        "/api/comment/deleteCommentByAdmin",
+                        "/api/comment/batchDeleteComments",
+                        "/api/comment/updateCommentStatus",
+
+                        // 用户管理
+                        "/api/user/getAllUsers",
+                        "/api/user/updateUserStatus",
+                        "/api/user/deleteUser",
+
+                        // 分类标签管理
+                        "/api/category/admin/**",
+                        "/api/tag/admin/**"
                 )
-                .hasRole("admin")
+                .hasRole("admin")  // 只允许管理员访问
 
                 // ==========================================
-                // 3. 登录用户权限 (普通用户 + 管理员)
+                // 3. 登录用户权限 (普通用户和管理员都可以)
                 // ==========================================
                 .antMatchers(
-                        "/comment/insert",
-                        "/oplog/**",
-                        "/reply/**",
-                        "/comment/getUserComments",
-                        "/user/updateInfo",
+                        // 文章操作
+                        "/api/article/publishArticle",
+                        "/api/article/updateArticle",
+                        "/api/article/deleteArticle",
+                        "/api/article/like",
+                        "/api/article/collect",
+                        "/api/article/getMyArticles",
+                        "/api/article/getMyDrafts",
                         "/api/article/upload",
-                        "/api/article/publishArticle"
+
+                        // 评论操作
+                        "/api/comment/insert",
+                        "/api/comment/deleteMyComment",
+                        "/api/comment/like",
+
+                        // 回复操作
+                        "/api/reply/insert",
+                        "/api/reply/deleteMyReply",
+
+                        // 用户操作
+                        "/api/user/updateInfo",
+                        "/api/user/updatePassword",
+                        "/api/user/uploadAvatar",
+
+                        // 消息通知
+                        "/api/notification/**"
                 )
-                .hasAnyRole("common", "admin")
+                .hasAnyRole("common", "admin")  // 普通用户和管理员都可以
 
                 // ==========================================
                 // 4. 其他所有请求都需要认证
@@ -156,6 +200,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // 密码加密策略
+        return new BCryptPasswordEncoder();
     }
 }
