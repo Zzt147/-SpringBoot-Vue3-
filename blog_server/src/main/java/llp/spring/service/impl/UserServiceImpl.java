@@ -120,8 +120,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     // --- 实现接口定义的方法 ---
     @Override
     public User selectByUsername(String username) {
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", username);
-        return userMapper.selectOne(queryWrapper);
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("username", username);
+        return baseMapper.selectOne(wrapper);
     }
 }

@@ -11,19 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-
-import org.springframework.util.StringUtils; // 建议引入
-import org.springframework.beans.BeanUtils; // 【新增】用于对象属性拷贝
 import org.springframework.security.crypto.password.PasswordEncoder;
-import java.util.concurrent.TimeUnit; // 【新增】解决找不到符号 TimeUnit
+import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
+import org.springframework.beans.BeanUtils;
+import com.wf.captcha.SpecCaptcha;
 
-import com.wf.captcha.SpecCaptcha; // EasyCaptcha
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.concurrent.TimeUnit;
+
 
 @RestController
 @RequestMapping("/api/user")
@@ -42,25 +39,91 @@ public class UserController {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    // ✅ 【新增】注入密码加密器
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @GetMapping("/checkUsername")
     public Result checkUsername(@RequestParam String username) {
         return userService.checkUsername(username);
     }
 
     // === 【新增】发送验证码接口 ===
+    /**
+     * 【修改】发送邮件验证码 (增加图形验证码校验)
+     * @param email 邮箱
+     * @param captcha 图形验证码内容
+     * @param captchaKey 图形验证码的Key
+     * @param type 业务类型：register=注册(默认), reset=重置密码, bind=绑定新邮箱
+     */
+    /**
+     * 【修改】发送邮件验证码 (增加图形验证码校验)
+     * @param email 邮箱
+     * @param captcha 图形验证码内容
+     * @param captchaKey 图形验证码的Key
+     * @param type 业务类型：register=注册(默认), reset=重置密码, bind=绑定新邮箱
+     * @param username 用户名（重置密码时需要）
+     */
     @PostMapping("/sendEmailCode")
-    public Result sendEmailCode(@RequestParam String email) {
+    public Result sendEmailCode(@RequestParam String email,
+                                @RequestParam(required = false) String captcha,
+                                @RequestParam(required = false) String captchaKey,
+                                @RequestParam(defaultValue = "register") String type,
+                                @RequestParam(required = false) String username) {  // 改为 @RequestParam
         if (!StringUtils.hasText(email)) {
             return new Result(false, "邮箱不能为空");
         }
 
-        // 1. 检查 Redis 中是否已有验证码（防止频繁发送）
+        // === 1. 人机验证 (强制校验) ===
+        if (!StringUtils.hasText(captcha) || !StringUtils.hasText(captchaKey)) {
+            return new Result(false, "请输入图形验证码");
+        }
+        String redisCaptcha = redisTemplate.opsForValue().get("captcha:" + captchaKey);
+        if (redisCaptcha == null) {
+            return new Result(false, "图形验证码已失效，请刷新");
+        }
+        if (!redisCaptcha.equalsIgnoreCase(captcha)) {
+            return new Result(false, "图形验证码错误");
+        }
+        // 验证通过后删除图形验证码，防止二次使用
+        redisTemplate.delete("captcha:" + captchaKey);
+
+        // 2. 核心逻辑：校验邮箱是否符合业务要求
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", email);
+        Long count = userMapper.selectCount(queryWrapper);
+
+        if ("register".equals(type)) {
+            // 注册时：邮箱不能已存在
+            if (count > 0) return new Result(false, "该邮箱已被注册，请直接登录");
+        } else if ("reset".equals(type)) {
+            // 重置密码时：必须提供用户名
+            if (!StringUtils.hasText(username)) {
+                return new Result(false, "请输入用户名");
+            }
+
+            // 【核心修复】先根据用户名查找用户
+            User user = userService.selectByUsername(username);  // 使用 username 参数
+            if (user == null) {
+                return new Result(false, "用户名不存在");
+            }
+
+            // 【核心修复】检查用户名对应的邮箱是否与输入的邮箱一致
+            if (!email.equals(user.getEmail())) {
+                return new Result(false, "邮箱与账号绑定的邮箱不一致");
+            }
+
+            // 邮箱存在性检查（其实这里已经通过上面的验证了，但保留作为双重检查）
+            if (count == 0) return new Result(false, "该邮箱未注册，无法重置密码");
+        }
+
+        // === 3. 检查发送频率 ===
         String key = "verify_code:" + email;
-        if (redisTemplate.hasKey(key)) {
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
             return new Result(false, "验证码已发送，请勿频繁操作");
         }
 
-        // 2. 生成并发送
+        // === 4. 生成并发送 ===
         String code = mailService.generateCode();
         try {
             mailService.sendCode(email, code);
@@ -69,7 +132,7 @@ public class UserController {
             return new Result(false, "邮件发送失败，请检查邮箱是否正确");
         }
 
-        // 3. 存入 Redis，5分钟有效
+        // === 5. 存入 Redis，5分钟有效 ===
         redisTemplate.opsForValue().set(key, code, 5, TimeUnit.MINUTES);
 
         return new Result(true, "验证码发送成功");
@@ -198,43 +261,49 @@ public class UserController {
     public void captcha(HttpServletRequest request, HttpServletResponse response) throws Exception {
         SpecCaptcha specCaptcha = new SpecCaptcha(130, 48, 4);
         String verCode = specCaptcha.text().toLowerCase();
-        String key = request.getParameter("key"); // 前端生成的唯一标识
+        String key = request.getParameter("key");
         if (StringUtils.hasText(key)) {
-            // 存入 Redis，5分钟有效
             redisTemplate.opsForValue().set("captcha:" + key, verCode, 5, TimeUnit.MINUTES);
         }
         specCaptcha.out(response.getOutputStream());
     }
 
-    // 2. 【新增】忘记密码 - 重置密码
+    /**
+     * 重置密码 (修复逻辑漏洞)
+     */
+    /**
+     * 重置密码 (修复逻辑漏洞)
+     */
     @PostMapping("/resetPassword")
     public Result resetPassword(@RequestBody UserDTO userDTO) {
-        // 1. 校验邮箱验证码
+        // 1. 校验验证码
         String key = "verify_code:" + userDTO.getEmail();
         String cachedCode = redisTemplate.opsForValue().get(key);
         if (cachedCode == null || !cachedCode.equals(userDTO.getCode())) {
             return new Result(false, "验证码错误或已过期");
         }
 
-        // 2. 查询用户
-        User user = userService.selectByUsername(userDTO.getUsername()); // 这里也可以用 email 查，看前端传什么
-        if (user == null) {
-            // 尝试用邮箱查
-            QueryWrapper<User> wrapper = new QueryWrapper<>();
-            wrapper.eq("email", userDTO.getEmail());
-            user = userMapper.selectOne(wrapper);
+        // 2. 根据用户名查找用户
+        if (!StringUtils.hasText(userDTO.getUsername())) {
+            return new Result(false, "用户名不能为空");
         }
 
+        User user = userService.selectByUsername(userDTO.getUsername());
         if (user == null) {
             return new Result(false, "用户不存在");
         }
 
-        // 3. 重置密码 (这里简单处理，实际项目应加密)
-        // user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        user.setPassword(userDTO.getPassword());
+        // 3. 【核心修复】安全校验：账号绑定的邮箱必须等于验证通过的邮箱
+        if (user.getEmail() == null || !user.getEmail().equals(userDTO.getEmail())) {
+            return new Result(false, "验证邮箱与该账户绑定的邮箱不一致！");
+        }
+
+        // 4. 重置密码
+        // ✅ 使用 passwordEncoder 对新密码进行加密
+        String encodedPassword = passwordEncoder.encode(userDTO.getPassword());
+        user.setPassword(encodedPassword);
 
         userService.updateById(user);
-        redisTemplate.delete(key);
 
         return new Result(true, "密码重置成功");
     }

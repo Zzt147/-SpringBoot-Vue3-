@@ -116,24 +116,31 @@ public interface CommentMapper extends BaseMapper<Comment> {
             "</script>")
     Integer countAdminComments(@Param("author") String author);
 
-    // 【新增】获取我点赞的评论
-    @Select("SELECT c.id, c.content, c.author, c.created, 'COMMENT' as type, c.article_id as articleId, c.article_id as refId, (SELECT title FROM t_article WHERE id = c.article_id) as targetName " +
-            "FROM t_comment c JOIN t_comment_like l ON c.id = l.comment_id WHERE l.user_id = #{userId} ORDER BY c.created DESC")
+    // 【新增】查询我点赞的评论 (联表查出文章标题，方便前端显示)
+    // 【修改后】使用 LEFT JOIN 确保能查到 targetName (文章标题)
+    @Select("SELECT c.id, c.content, c.author, c.created, 'COMMENT' as type, " +
+            "c.article_id as articleId, c.article_id as refId, " +
+            "a.title as targetName " +  // 直接从关联的 article 表取 title 映射为 targetName
+            "FROM t_comment c " +
+            "INNER JOIN t_comment_like l ON c.id = l.comment_id " +
+            "LEFT JOIN t_article a ON c.article_id = a.id " + // 关键：左连接文章表
+            "WHERE l.user_id = #{userId} " +
+            "ORDER BY l.id DESC") // 建议按点赞时间倒序 (l.id)，也可以按评论时间 (c.created)
     List<UserCommentVO> getMyLikedComments(@Param("userId") Integer userId);
 
-    // === 【新增】点赞相关方法 ===
-    @Update("UPDATE t_comment SET likes = likes + 1 WHERE id = #{commentId}")
-    void increaseLikes(Integer commentId);
-
-    @Update("UPDATE t_comment SET likes = IF(likes>0, likes - 1, 0) WHERE id = #{commentId}")
-    void decreaseLikes(Integer commentId);
-
-    @Select("SELECT COUNT(*) FROM t_comment_like WHERE user_id = #{userId} AND comment_id = #{commentId}")
-    Integer countCommentLike(@Param("userId") Integer userId, @Param("commentId") Integer commentId);
-
+    // 【新增】点赞相关操作
     @Insert("INSERT INTO t_comment_like (user_id, comment_id) VALUES (#{userId}, #{commentId})")
     void insertCommentLike(@Param("userId") Integer userId, @Param("commentId") Integer commentId);
 
     @Delete("DELETE FROM t_comment_like WHERE user_id = #{userId} AND comment_id = #{commentId}")
     void deleteCommentLike(@Param("userId") Integer userId, @Param("commentId") Integer commentId);
+
+    @Select("SELECT COUNT(*) FROM t_comment_like WHERE user_id = #{userId} AND comment_id = #{commentId}")
+    Integer countCommentLike(@Param("userId") Integer userId, @Param("commentId") Integer commentId);
+
+    @Update("UPDATE t_comment SET likes = IFNULL(likes, 0) + 1 WHERE id = #{commentId}")
+    void increaseLikes(@Param("commentId") Integer commentId);
+
+    @Update("UPDATE t_comment SET likes = GREATEST(IFNULL(likes, 0) - 1, 0) WHERE id = #{commentId}")
+    void decreaseLikes(@Param("commentId") Integer commentId);
 }

@@ -1,279 +1,241 @@
-<template>
-  <div class="register-container">
-    <el-row justify="center">
-      <el-col :span="10">
-        <h1 class="register-title">用户注册</h1>
-      </el-col>
-    </el-row>
-    <el-row justify="center">
-      <el-col :span="8">
-        <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" :size="formSize"
-          label-width="120px">
-
-          <el-form-item label="用户名：" prop="username">
-            <el-input v-model="registerForm.username" placeholder="请输入用户名" name="username" autocomplete="username">
-              <template #prefix>
-                <el-icon>
-                  <User />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-
-          <el-form-item label="邮箱：" prop="email">
-            <el-input v-model="registerForm.email" placeholder="请输入邮箱" name="email" autocomplete="email">
-              <template #prefix>
-                <el-icon>
-                  <Message />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-
-          <el-form-item label="验证码：" prop="code">
-            <el-row :gutter="10" style="width: 100%">
-              <el-col :span="16">
-                <el-input v-model="registerForm.code" placeholder="6位验证码" name="code" autocomplete="off">
-                  <template #prefix>
-                    <el-icon>
-                      <Key />
-                    </el-icon>
-                  </template>
-                </el-input>
-              </el-col>
-              <el-col :span="8">
-                <el-button type="primary" :disabled="isSending || countdown > 0" @click="sendCode" style="width: 100%">
-                  {{ countdown > 0 ? `${countdown}s后重发` : '发送验证码' }}
-                </el-button>
-              </el-col>
-            </el-row>
-          </el-form-item>
-
-          <el-form-item label="密码：" prop="password">
-            <el-input v-model="registerForm.password" type="password" show-password placeholder="请输入密码"
-              autocomplete="new-password">
-              <template #prefix>
-                <el-icon>
-                  <Lock />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-
-          <el-form-item label="确认密码：" prop="confirmPassword">
-            <el-input v-model="registerForm.confirmPassword" type="password" show-password placeholder="请再次输入密码"
-              autocomplete="new-password">
-              <template #prefix>
-                <el-icon>
-                  <Lock />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-
-          <el-form-item>
-            <el-button type="primary" @click="submitRegister(registerFormRef)">注册</el-button>
-            <el-button @click="goToLogin">返回登录</el-button>
-          </el-form-item>
-        </el-form>
-      </el-col>
-    </el-row>
-    <el-row justify="center">
-      <el-col :span="8">
-        <p style="margin-top: 20px; color: #666">
-          已有账号？<el-link type="primary" @click="goToLogin">立即登录</el-link>
-        </p>
-      </el-col>
-    </el-row>
-  </div>
-</template>
-
 <script setup>
-import { reactive, ref, onUnmounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { reactive, ref, inject, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
-// 引入图标，让界面更清晰，不会混淆
-import { User, Message, Lock, Key } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { User, Lock, Message, Key, Picture, Back } from '@element-plus/icons-vue'
+import backImg from '@/assets/back.jpg'
 
 const router = useRouter()
-const formSize = ref('default')
-const registerFormRef = ref()
+const axios = inject('axios')
 
-// === 发送验证码相关状态 ===
-const isSending = ref(false)
+const isLoading = ref(false)
+const formSize = ref('large')
+
+const registerForm = reactive({
+  username: '',
+  password: '',
+  confirmPassword: '',
+  email: '',
+  code: '',
+  captcha: '',
+  captchaKey: ''
+})
+
+const captchaUrl = ref('')
 const countdown = ref(0)
 let timer = null
 
-// 注册表单数据：现在包含了 code 字段
-const registerForm = reactive({
-  username: '',
-  email: '',
-  code: '',     // ✅ 新增
-  password: '',
-  confirmPassword: ''
-})
-
-// === 验证规则函数 ===
-const validatePassword = (rule, value, callback) => {
-  if (value === '') {
-    callback(new Error('请输入密码'))
-  } else if (value.length < 6) {
-    callback(new Error('密码长度不能小于6位'))
-  } else {
-    callback()
-  }
+const refreshCaptcha = () => {
+  const key = new Date().getTime().toString()
+  registerForm.captchaKey = key
+  captchaUrl.value = `/api/user/captcha?key=${key}`
 }
 
-const validateConfirmPassword = (rule, value, callback) => {
-  if (value === '') {
-    callback(new Error('请再次输入密码'))
-  } else if (value !== registerForm.password) {
-    callback(new Error('两次输入密码不一致'))
-  } else {
-    callback()
-  }
-}
+onMounted(() => refreshCaptcha())
 
-// 验证码校验
-const validateCode = (rule, value, callback) => {
-  if (value === '') {
-    callback(new Error('请输入验证码'))
-  } else if (!/^\d{6}$/.test(value)) {
-    callback(new Error('验证码必须为6位数字'))
-  } else {
-    callback()
-  }
-}
-
-// === 表单验证规则 ===
-const registerRules = reactive({
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在3到20个字符', trigger: 'blur' }
-  ],
-  email: [
-    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
-  ],
-  code: [ // ✅ 新增验证码规则
-    { required: true, validator: validateCode, trigger: 'blur' }
-  ],
-  password: [
-    { required: true, validator: validatePassword, trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, validator: validateConfirmPassword, trigger: 'blur' }
-  ]
-})
-
-// === 发送验证码逻辑 ===
-const sendCode = async () => {
-  // 1. 先校验邮箱
-  if (!registerForm.email) {
-    ElMessage.warning('请先输入邮箱')
-    return
-  }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(registerForm.email)) {
-    ElMessage.warning('请输入有效的邮箱地址')
-    return
-  }
-
-  // 2. 防止重复点击
-  if (isSending.value) return
-  isSending.value = true
+const sendEmailCode = async () => {
+  if (!registerForm.email) return ElMessage.warning('请输入邮箱')
+  if (!registerForm.captcha) return ElMessage.warning('请输入图形验证码')
 
   try {
-    // 3. 发送请求
-    const response = await axios.post('/api/user/sendEmailCode?email=' + registerForm.email)
+    const params = new URLSearchParams()
+    params.append('email', registerForm.email)
+    params.append('captcha', registerForm.captcha)
+    params.append('captchaKey', registerForm.captchaKey)
+    params.append('type', 'register')
 
-    if (response.data.success) {
-      ElMessage.success('验证码已发送，请查收')
+    const res = await axios.post('/api/user/sendEmailCode', params)
 
-      // 4. 开启倒计时
+    if (res.data.success) {
+      ElMessage.success('验证码已发送')
       countdown.value = 60
-      if (timer) clearInterval(timer)
-
       timer = setInterval(() => {
         countdown.value--
-        if (countdown.value <= 0) {
-          clearInterval(timer)
-          isSending.value = false
-          countdown.value = 0
-        }
+        if (countdown.value <= 0) clearInterval(timer)
       }, 1000)
     } else {
-      ElMessage.error(response.data.msg || '发送失败')
-      isSending.value = false
+      ElMessage.error(res.data.msg)
+      refreshCaptcha()
     }
-  } catch (error) {
-    console.error('发送验证码错误:', error)
-    const errorMsg = error.response?.data?.msg || '系统错误，发送失败'
-    ElMessage.error(errorMsg)
-    isSending.value = false
+  } catch (e) {
+    ElMessage.error('发送失败')
   }
 }
 
-// === 提交注册 ===
-const submitRegister = async (formEl) => {
-  if (!formEl) return
+const handleRegister = async () => {
+  if (registerForm.password !== registerForm.confirmPassword) return ElMessage.warning('两次密码不一致')
+  if (!registerForm.code) return ElMessage.warning('请输入邮箱验证码')
 
-  await formEl.validate(async (valid, fields) => {
-    if (valid) {
-      try {
-        const { confirmPassword, ...registerData } = registerForm
-        // 发送给后端的包含: username, email, password, code
-        const response = await axios.post('/api/user/register', registerData)
+  isLoading.value = true
+  try {
+    const res = await axios.post('/api/user/register', {
+      username: registerForm.username,
+      password: registerForm.password,
+      email: registerForm.email,
+      code: registerForm.code
+    })
 
-        if (response.data.success) {
-          ElMessageBox.alert('注册成功！', '提示', {
-            confirmButtonText: '确定',
-            callback: () => {
-              router.push('/login')
-            }
-          })
-        } else {
-          ElMessageBox.alert(response.data.msg || '注册失败', '错误')
-        }
-      } catch (error) {
-        ElMessageBox.alert('注册失败，请稍后重试', '系统错误')
-        console.error('注册错误:', error)
-      }
+    if (res.data.success) {
+      ElMessage.success('注册成功，请登录')
+      router.push('/login')
     } else {
-      console.log('表单验证失败:', fields)
+      ElMessage.error(res.data.msg)
     }
-  })
+  } catch (err) {
+    ElMessage.error('注册失败')
+  } finally {
+    isLoading.value = false
+  }
 }
 
-const goToLogin = () => {
-  router.push('/login')
-}
-
-// 销毁时清理定时器
-onUnmounted(() => {
-  if (timer) clearInterval(timer)
-})
+const goToLogin = () => router.push('/login')
 </script>
 
+<template>
+  <div class="flat-container" :style="{ backgroundImage: `url(${backImg})` }">
+    <div class="flat-card">
+      <div class="header-row">
+        <el-button link :icon="Back" @click="goToLogin" class="back-btn">登录</el-button>
+        <h2 class="card-title" style="margin:0; flex:1">注册新账号</h2>
+      </div>
+
+      <el-form :model="registerForm" :size="formSize" class="register-scroll">
+        <el-form-item>
+          <el-input v-model="registerForm.username" placeholder="用户名 (2-20字符)" :prefix-icon="User" />
+        </el-form-item>
+        <el-form-item>
+          <el-input v-model="registerForm.email" placeholder="电子邮箱" :prefix-icon="Message" />
+        </el-form-item>
+
+        <div class="code-group">
+          <el-input v-model="registerForm.captcha" placeholder="图形验证码" :prefix-icon="Picture" style="width: 60%" />
+          <img :src="captchaUrl" @click="refreshCaptcha" class="captcha-img" title="点击刷新" />
+        </div>
+
+        <div class="code-group">
+          <el-input v-model="registerForm.code" placeholder="邮箱验证码" :prefix-icon="Key" style="width: 60%" />
+          <el-button class="code-btn" :disabled="countdown > 0" @click="sendEmailCode">
+            {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+          </el-button>
+        </div>
+
+        <el-form-item>
+          <el-input v-model="registerForm.password" type="password" placeholder="设置密码" :prefix-icon="Lock"
+            show-password />
+        </el-form-item>
+        <el-form-item>
+          <el-input v-model="registerForm.confirmPassword" type="password" placeholder="确认密码" :prefix-icon="Lock" />
+        </el-form-item>
+
+        <el-button type="success" class="action-btn" :loading="isLoading" @click="handleRegister">
+          立即注册
+        </el-button>
+      </el-form>
+    </div>
+
+    <div class="footer-text">
+      <p>2022 © Powered By <span style="color: #0e90d2">CrazyStone</span></p>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-.register-container {
-  padding: 60px 20px;
-  min-height: 100vh;
-  background-color: #f5f5f5;
+/* 复用与 Login.vue 一致的样式 */
+.flat-container {
+  width: 100vw;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
 }
 
-.register-title {
-  font-size: 2.5rem;
-  color: #333;
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.el-form {
-  background: white;
-  padding: 40px 30px;
+.flat-card {
+  width: 400px;
+  /* 注册页内容多，稍微高一点 */
+  min-height: 500px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  padding: 30px 35px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  text-align: center;
+  color: #333;
+  font-weight: 500;
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+}
+
+.action-btn {
+  width: 100%;
+  margin-top: 20px;
+  height: 44px;
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+
+.code-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.captcha-img {
+  width: 38%;
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #dcdfe6;
+}
+
+.code-btn {
+  width: 38%;
+  height: 40px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.back-btn {
+  position: absolute;
+  left: 0;
+  font-size: 14px;
+}
+
+.footer-text {
+  position: absolute;
+  bottom: 40px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  font-size: 14px;
+}
+
+/* 注册内容如果过多可以滚动 */
+.register-scroll {
+  max-height: 550px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.register-scroll::-webkit-scrollbar {
+  width: 0;
 }
 </style>

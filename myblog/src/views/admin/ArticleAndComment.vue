@@ -268,10 +268,15 @@ function submit() {
       <div class="article-meta-bar">
         <div class="meta-author">
           <el-avatar :size="24"
-            :src="store.user.user?.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
+            :src="articleAndComment.article.authorAvatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
           <span style="margin-left: 8px;">{{ articleAndComment.article.author || '未知作者' }}</span>
         </div>
-
+        <!-- 调试信息 
+          <div v-show="articleAndComment.article" style="color: red; font-size: 12px;">
+            文章数据: {{ JSON.stringify(articleAndComment.article) }}<br>
+            作者头像: {{ articleAndComment.article.authorAvatar }}
+          </div>
+          -->
         <div class="meta-info">
           <span>发布于: {{ articleAndComment.article.created }}</span>
 

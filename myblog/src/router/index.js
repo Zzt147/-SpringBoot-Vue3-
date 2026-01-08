@@ -43,6 +43,14 @@ const routes = [
     component: () => import('@/views/user/PersonalCenter.vue'),
   },
 
+  // 【新增】独立的纯净发布文章页面
+  {
+    path: '/publish',
+    name: 'purePublish',
+    component: () => import('@/views/admin/PublishArticle.vue'),
+    meta: { title: '发布文章' },
+  },
+
   // ==============================
   // 后台管理区域 (嵌套路由)
   // ==============================

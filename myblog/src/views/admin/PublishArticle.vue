@@ -6,9 +6,10 @@ import { useStore } from '@/stores/my'
 import Cropper from "@/components/Cropper.vue";
 import { undefine, nullZeroBlank } from "@/js/tool.js"
 import { useRoute } from 'vue-router'
-import { Position, MapLocation } from '@element-plus/icons-vue' // 引入图标
-import 'leaflet/dist/leaflet.css' // 引入地图样式
-import L from 'leaflet' // 引入地图核心库
+import { Position, MapLocation } from '@element-plus/icons-vue'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+import { useRouter } from 'vue-router'
 
 const store = useStore()
 const route = useRoute()
@@ -17,14 +18,22 @@ const axios = inject('axios')
 let type = "add"
 const header = ref("发布文章")
 
+const router = useRouter() // 2. 【新增】初始化 router
+
 // === 分类相关 ===
 const categoryOptions = ref([])
+
+// === 标签相关 ===
 const selectedCategory = ref([])
+const dynamicTags = ref([])
 
 // === 地图相关变量 ===
 const mapVisible = ref(false)
 let mapInstance = null
 let markerInstance = null
+
+// === 状态标志 ===
+const isSubmitting = ref(false)
 
 // 加载分类树
 function loadCategoryTree() {
@@ -35,7 +44,7 @@ function loadCategoryTree() {
   })
 }
 
-// 图片上传配置 (保持不变)
+// 图片上传配置
 const image_upload_handler = (blobInfo, progress) => new Promise((resolve, reject) => {
   const xhr = new XMLHttpRequest();
   xhr.withCredentials = false;
@@ -52,6 +61,7 @@ const image_upload_handler = (blobInfo, progress) => new Promise((resolve, rejec
   const formData = new FormData();
   formData.append('file', blobInfo.blob(), blobInfo.filename());
   xhr.send(formData);
+  resolve("url_placeholder");
 });
 
 const apiKey = ref('hyeykcd9rhyowt7om2q282pbdhjd8nnw7tci613prb5vgo7d')
@@ -65,44 +75,44 @@ const init = reactive({
   convert_urls: false
 })
 
-// === 文章对象 (新增 location) ===
+// === 文章对象 ===
 let article = reactive({
   "title": "",
   "tags": "",
   "content": "",
   "categories": "",
   "thumbnail": "",
-  "location": "" // 新增字段
+  "location": ""
 })
 
 const cropper1 = ref(null)
 
-// === 【新增功能】自动保存草稿 ===
-const DRAFT_KEY = 'blog_publish_draft_v1' // 草稿存储Key
+// === 自动保存草稿 ===
+const DRAFT_KEY = 'blog_publish_draft_v1'
+let draftTimer = null
 
 // 监听 article 对象变化，自动保存
-let draftTimer = null
 watch(article, (newVal) => {
-  // 防抖处理：如果1秒内连续输入，清除上一次的定时器
+  if (isSubmitting.value) return
+
   if (draftTimer) clearTimeout(draftTimer)
 
   draftTimer = setTimeout(() => {
-    // 保存关键字段
     const draftData = {
       title: newVal.title,
       tags: newVal.tags,
       content: newVal.content,
       categories: newVal.categories,
       location: newVal.location,
-      thumbnail: newVal.thumbnail // 注意：这里保存的是 url，如果是 Cropper 未上传的截图可能无法保存
+      thumbnail: newVal.thumbnail,
+      selectedCategory: selectedCategory.value,
+      dynamicTags: dynamicTags.value
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData))
-    // 可以选择在控制台打印日志方便调试
-    // console.log('草稿已自动保存', new Date().toLocaleTimeString())
-  }, 5000) // 1秒后执行保存
-}, { deep: true }) // 深度监听
+  }, 5000)
+}, { deep: true })
 
-// === 1. 自动获取定位 ===
+// === 自动获取定位 ===
 function autoLocate() {
   if (!navigator.geolocation) {
     ElMessage.error('您的浏览器不支持地理定位')
@@ -119,13 +129,35 @@ function autoLocate() {
   navigator.geolocation.getCurrentPosition(async (position) => {
     const { latitude, longitude } = position.coords
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&accept-language=zh-CN`)
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&accept-language=zh-CN&addressdetails=1`)
       const data = await res.json()
-      const addr = data.address
-      const city = addr.city || addr.town || addr.county || addr.state || '未知位置'
-      article.location = city
-      loadingMsg.close()
-      ElMessage.success('定位成功: ' + city)
+
+      if (data.display_name) {
+        let fullAddress = data.display_name
+        if (fullAddress.length > 150) {
+          fullAddress = fullAddress.substring(0, 150) + "..."
+        }
+        article.location = fullAddress
+        loadingMsg.close()
+        ElMessage.success('定位成功: ' + fullAddress)
+      } else {
+        const addr = data.address || {}
+        const locationParts = []
+        if (addr.state) locationParts.push(addr.state)
+        if (addr.city) locationParts.push(addr.city)
+        if (addr.county) locationParts.push(addr.county)
+        if (addr.town) locationParts.push(addr.town)
+        if (addr.road) locationParts.push(addr.road)
+
+        if (locationParts.length > 0) {
+          article.location = locationParts.join('')
+          loadingMsg.close()
+          ElMessage.success('定位成功: ' + article.location)
+        } else {
+          loadingMsg.close()
+          ElMessage.error('无法获取详细地址信息')
+        }
+      }
     } catch (e) {
       loadingMsg.close()
       ElMessage.error('获取地址名称失败，请手动输入')
@@ -133,10 +165,14 @@ function autoLocate() {
   }, (err) => {
     loadingMsg.close()
     ElMessage.error('自动定位失败，请检查浏览器权限或使用地图选取')
-  }, { timeout: 10000 })
+  }, {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 0
+  })
 }
 
-// === 2. 打开地图手动选取 ===
+// === 打开地图手动选取 ===
 function openMap() {
   mapVisible.value = true
   nextTick(() => {
@@ -161,20 +197,42 @@ function initMap() {
       markerInstance = L.marker(e.latlng).addTo(mapInstance)
     }
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&accept-language=zh-CN`)
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=zh-CN&addressdetails=1`)
       const data = await res.json()
-      const addr = data.address
-      const locationName = addr.city || addr.town || addr.county || addr.state || data.display_name.split(',')[0]
-      article.location = locationName
-      ElMessage.success(`已选中: ${locationName}`)
+
+      if (data.display_name) {
+        let fullAddress = data.display_name
+        if (fullAddress.length > 150) {
+          fullAddress = fullAddress.substring(0, 150) + "..."
+        }
+        article.location = fullAddress
+        ElMessage.success(`已选中: ${fullAddress}`)
+      } else {
+        const addr = data.address || {}
+        const locationParts = []
+        if (addr.state) locationParts.push(addr.state)
+        if (addr.city) locationParts.push(addr.city)
+        if (addr.county) locationParts.push(addr.county)
+        if (addr.town) locationParts.push(addr.town)
+        if (addr.road) locationParts.push(addr.road)
+
+        if (locationParts.length > 0) {
+          article.location = locationParts.join('')
+          ElMessage.success(`已选中: ${article.location}`)
+        } else {
+          ElMessage.warning('地址解析失败，请直接输入')
+        }
+      }
     } catch (err) {
       ElMessage.warning('地址解析失败，请直接输入')
     }
   })
 }
 
-// 发布文章
-function publishArticle() {
+// === 发布文章 ===
+async function publishArticle() {
+  isSubmitting.value = true
+
   let thumbnail = cropper1.value.getThumbnail()
   if (undefine(thumbnail) || nullZeroBlank(thumbnail) || thumbnail.indexOf("/api") != 0) {
     article.thumbnail = ""
@@ -188,57 +246,53 @@ function publishArticle() {
     article.categories = "默认分类"
   }
 
-  // 标签格式化 (这行代码修改了 article，会触发一次 watch，启动一个 5秒 的定时器)
-  if (article.tags) {
-    article.tags = article.tags.replace(/，/g, ',').trim();
-  }
-
-  axios({
-    method: 'post',
-    url: '/api/article/publishArticle?type=' + type,
-    data: article,
-    timeout: 3000000
-  }).then((response) => {
-    ElMessageBox.alert(response.data, '结果')
-    if ("添加成功！" == response.data || "修改成功！" == response.data) {
-
-      // === 【核心修复代码 START】 ===
-
-      // 1. 立即杀死当前所有 pending 的定时器
-      // (防止上面 "标签格式化" 触发的定时器在 5秒后 复活草稿)
-      if (draftTimer) {
-        clearTimeout(draftTimer)
-        draftTimer = null
-      }
-
-      // 2. 清除物理缓存
-      localStorage.removeItem(DRAFT_KEY)
-
-      // 3. 清空数据
-      // (注意：clearData 会修改 article 属性，这会【再次】触发 watch 并启动【新】的定时器！)
-      clearData()
-
-      // 4. 赶在新的定时器生效前，再次将其扼杀
-      // 使用 nextTick 确保我们是在 clearData 触发的 watch 执行之后运行
-      nextTick(() => {
-        if (draftTimer) {
-          clearTimeout(draftTimer)
-          draftTimer = null
-        }
-        // 双重保险：再次确保 localStorage 是干净的
-        localStorage.removeItem(DRAFT_KEY)
-      })
-
-      // === 【核心修复代码 END】 ===
-
-      window.scrollTo(0, 0)
+  // === 关键修改：标签处理逻辑 ===
+  // 1. 去重
+  const uniqueTags = [...new Set(dynamicTags.value)]
+  // 2. 格式化每个标签：确保以#开头，去掉末尾空格，用空格连接
+  const formattedTags = uniqueTags.map(tag => {
+    let t = tag.trim()
+    // 确保以#开头
+    if (!t.startsWith('#')) {
+      t = '#' + t
     }
-  }).catch((error) => {
-    ElMessageBox.alert("系统错误！", '结果')
+    // 去掉末尾的空格（如果有）
+    t = t.replace(/\s+$/, '')
+    return t
   })
+  // 3. 用空格连接，而不是逗号
+  article.tags = formattedTags.join(' ')
+
+  try {
+    const response = await axios({
+      method: 'post',
+      url: '/api/article/publishArticle?type=' + type,
+      data: article,
+      timeout: 3000000
+    })
+
+    // 成功后的处理：先清理数据，再显示成功消息
+    clearAllData()
+
+    ElMessageBox.alert(response.data, '结果', {
+      confirmButtonText: '确定',
+      callback: () => {
+        // 确定后的回调：再次清理确保数据消失
+        clearAllData()
+        window.scrollTo(0, 0)
+      }
+    })
+  } catch (error) {
+    ElMessageBox.alert("系统错误！", '结果')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
-const gotoArticleManage = inject("gotoArticleManage")
+const gotoArticleManage = inject("gotoArticleManage", () => {
+  router.push('/')
+})
+
 let isShowCropper = ref(true)
 
 function freshCropper() {
@@ -247,15 +301,65 @@ function freshCropper() {
 }
 provide("freshCropper", freshCropper)
 
-function clearData() {
+// === 清理所有数据 ===
+function clearAllData() {
+  // 清除定时器
+  if (draftTimer) {
+    clearTimeout(draftTimer)
+    draftTimer = null
+  }
+
+  // 清除本地存储草稿
+  localStorage.removeItem(DRAFT_KEY)
+
+  // 清空表单数据
+  clearFormData()
+}
+
+function clearFormData() {
+  // 清空文章对象
   article.title = ""
   article.tags = ""
   article.content = ""
   article.categories = ""
   article.location = ""
-  selectedCategory.value = []
   article.thumbnail = ""
-  cropper1.value.clearData()
+
+  // 清空组件数据
+  selectedCategory.value = []
+  dynamicTags.value = []
+
+  // 清空Cropper
+  if (cropper1.value) {
+    cropper1.value.clearData()
+  }
+}
+
+// === 标签输入处理：添加#前缀和空格 ===
+const handleTagInput = (tag) => {
+  if (tag && !tag.startsWith('#')) {
+    return `#${tag} `
+  }
+  return tag
+}
+
+// === 处理标签变化：确保格式正确 ===
+const handleTagsChange = () => {
+  dynamicTags.value = dynamicTags.value.map(tag => {
+    let processedTag = tag.trim()
+
+    // 确保以#开头
+    if (!processedTag.startsWith('#')) {
+      processedTag = `#${processedTag}`
+    }
+
+    // 确保末尾有空格（用于显示分隔）
+    if (!processedTag.endsWith(' ')) {
+      processedTag = `${processedTag} `
+    }
+
+    return processedTag
+  })
 }
 
 onMounted(() => {
@@ -268,11 +372,10 @@ onMounted(() => {
     article.categories = pathStr
   }
 
-  // 2. 检查是否有草稿 (放在编辑模式之前，避免覆盖编辑数据，但用户确认后可覆盖)
+  // 2. 检查是否有草稿
   const draftStr = localStorage.getItem(DRAFT_KEY)
   if (draftStr) {
     const draft = JSON.parse(draftStr)
-    // 只要标题或内容不为空，就提示恢复
     if (draft.title || draft.content) {
       ElMessageBox.confirm(
         '检测到您上次有未发布的草稿，是否恢复？',
@@ -292,22 +395,43 @@ onMounted(() => {
         article.thumbnail = draft.thumbnail || ""
 
         // 恢复分类选择框
-        if (article.categories) {
-          selectedCategory.value = article.categories.split('/')
+        if (draft.selectedCategory && draft.selectedCategory.length > 0) {
+          selectedCategory.value = draft.selectedCategory
+        } else if (draft.categories) {
+          selectedCategory.value = draft.categories.split('/')
         }
-        // 恢复缩略图 (如果缩略图是已上传的图片链接)
+
+        // 恢复标签（处理空格分隔的标签字符串）
+        if (draft.dynamicTags && draft.dynamicTags.length > 0) {
+          dynamicTags.value = draft.dynamicTags
+        } else if (draft.tags) {
+          // 将空格分隔的标签字符串转换为数组（每个标签加空格）
+          const tagsArray = draft.tags.split(' ').filter(item => item.trim() !== '')
+          dynamicTags.value = tagsArray.map(tag => {
+            if (!tag.startsWith('#')) {
+              return `#${tag} `
+            }
+            if (!tag.endsWith(' ')) {
+              return `${tag} `
+            }
+            return tag
+          })
+        }
+
+        // 恢复缩略图
         if (article.thumbnail && article.thumbnail.indexOf("/api") == 0 && cropper1.value) {
           cropper1.value.setThumbnail(article.thumbnail)
         }
+
         ElMessage.success('草稿已恢复')
       }).catch(() => {
-        localStorage.removeItem(DRAFT_KEY) // 丢弃草稿
+        localStorage.removeItem(DRAFT_KEY)
         ElMessage.info('已丢弃草稿')
       })
     }
   }
 
-  // 3. 处理编辑模式 (如果 store.articleId > 0)
+  // 3. 处理编辑模式
   if (store.articleId > 0) {
     type = "edit"
     header.value = "编辑文章"
@@ -318,11 +442,6 @@ onMounted(() => {
       if (response.data.success) {
         let nowArticle = response.data.map.article
         article.id = nowArticle.id
-        // 如果用户刚才点了"恢复草稿"，这里的赋值会覆盖草稿。
-        // 但通常 axios 是异步的，且"恢复草稿"是需要用户点击确认的。
-        // 逻辑顺序：页面加载 -> 弹出询问恢复 -> 发送请求获取编辑数据 -> 请求返回覆盖数据 -> 用户点击恢复覆盖数据。
-        // 这样设计是合理的：用户点击恢复的动作通常比请求返回慢，所以草稿最终会覆盖服务器旧数据，达到"恢复未保存工作"的目的。
-
         article.title = nowArticle.title
         article.tags = nowArticle.tags
         article.content = nowArticle.content
@@ -332,6 +451,21 @@ onMounted(() => {
         if (nowArticle.categories) {
           article.categories = nowArticle.categories
           selectedCategory.value = nowArticle.categories.split('/')
+        }
+
+        // 处理标签回显：将空格分隔的标签字符串转换为数组
+        if (article.tags) {
+          // 假设数据库存储格式为 "#tag1 #tag2"
+          const tagsArray = article.tags.split(' ').filter(item => item.trim() !== '')
+          dynamicTags.value = tagsArray.map(tag => {
+            if (!tag.startsWith('#')) {
+              return `#${tag} `
+            }
+            if (!tag.endsWith(' ')) {
+              return `${tag} `
+            }
+            return tag
+          })
         }
 
         if (!undefine(article.thumbnail) && !nullZeroBlank(article.thumbnail) && article.thumbnail.indexOf("/api") == 0) {
@@ -347,28 +481,6 @@ onMounted(() => {
     })
   }
 })
-
-// 新增一个标志位，表示是否正在发布或已完成发布
-const isSubmitting = ref(false)
-
-// 自动保存草稿
-let autoSaveTimer = null
-const autoSaveDraft = () => {
-  // 【修复1】如果正在提交或已发布成功，绝对不要保存草稿
-  if (isSubmitting.value) return
-
-  // 只有当有内容时才保存
-  if (article.title || article.content || article.tags) {
-    // ... 原有保存逻辑
-    const draft = {
-      ...article,
-      dynamicTags: dynamicTags.value,
-      dynamicCategories: dynamicCategories.value,
-      timestamp: new Date().getTime()
-    }
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
-  }
-}
 </script>
 
 <template>
@@ -390,7 +502,8 @@ const autoSaveDraft = () => {
     </el-col>
 
     <el-col :span="8">
-      <el-input v-model="article.tags" placeholder="标签: #Java #Spring" clearable />
+      <el-input-tag v-model="dynamicTags" placeholder="输入标签后回车" aria-label="输入标签后回车" :max="5"
+        :before-tag-add="handleTagInput" @change="handleTagsChange" />
     </el-col>
   </el-row>
 
@@ -426,7 +539,7 @@ const autoSaveDraft = () => {
     <el-col :span="24">
       <div align="right">
         <el-button @click="gotoArticleManage">返回列表</el-button>
-        <el-button type="primary" @click="publishArticle">保存文章</el-button>
+        <el-button type="primary" @click="publishArticle" :loading="isSubmitting">保存文章</el-button>
       </div>
     </el-col>
   </el-row>
@@ -442,8 +555,7 @@ const autoSaveDraft = () => {
 </template>
 
 <style scoped>
-/* 确保地图容器有z-index，防止遮挡 */
 #map-container {
   z-index: 1;
 }
-</style>
+</style>/

@@ -74,14 +74,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter { // 权限配�
 
                         // 评论公开接口
                         "/api/comment/getAPageCommentByArticleId",
-
+                        // 评论公开接口
+                        "/api/reply/getReplies",
                         // 分类公开接口
                         "/api/category/**",
 
                         // 用户注册与验证
                         "/api/user/register",      // 注册接口
                         "/api/user/checkUsername", // 检查用户名
-                        "/api/user/sendEmailCode"  // 发送验证码接口
+                        "/api/user/sendEmailCode",  // 发送验证码接口
+
+                        // 【👇👇👇 新增下面这两行 👇👇👇】
+                        "/api/user/captcha",       // 放行图形验证码
+                        "/api/user/resetPassword"  // 放行重置密码
                 )
                 .permitAll()
 

@@ -15,4 +15,7 @@ public class ArticleVO {
     // === 新增字段 ===
     private Integer readRankChange; // 阅读排名变化值
     private Integer likeRankChange; // 点赞排名变化值
+    // ✅【新增】作者头像
+    private String authorAvatar;
+    private String authorName;  // 作者姓名
 }

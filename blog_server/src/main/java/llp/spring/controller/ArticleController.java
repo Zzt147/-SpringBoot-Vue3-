@@ -4,23 +4,22 @@ import llp.spring.entity.*;
 import llp.spring.mapper.ArticleMapper;
 import llp.spring.mapper.StatisticMapper;
 import llp.spring.mapper.TagMapper;
+import llp.spring.service.*;
 import llp.spring.tools.ArticleSearch;
 import llp.spring.tools.PageParams;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import llp.spring.service.ArticleService;
 import llp.spring.tools.Result;
 import org.springframework.web.multipart.MultipartFile;
 
 // 20251217新增功能 - 个人中心与浏览足迹
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import llp.spring.service.IUserService; // 引入 UserService
-import llp.spring.service.IOpLogService;
 
 // 20251217新增功能 - 完善个人中心与浏览足迹
 import llp.spring.entity.Article;
@@ -67,6 +66,9 @@ public class ArticleController {
 
     @Autowired
     private StatisticMapper statisticMapper; // 需注入
+
+    @Autowired  // 注入系统自动创建的Service对象，注意下面的对象名（首字母小写的类名）
+    private IStatisticService statisticService;
 
     // 方法1：主页打开时或从文章返回主页时调用
     @PostMapping("/getIndexData1")
@@ -213,15 +215,55 @@ public class ArticleController {
         return result;
     }
 
-    @RequestMapping("/selectById")
-    public Result selectById(@RequestParam Integer id) {
+    @PostMapping("/selectById")
+    public Result selectById(@RequestParam("id") Integer id) {
         Result result = new Result();
         try {
-            Article article = articleService.selectById(id);
-            result.getMap().put("article", article);
+            // 1. 获取文章基本信息
+            Article article = articleService.getById(id);
+            if (article == null) {
+                return new Result(false, "文章不存在");
+            }
+
+            // 2. 增加点击量 (保持原有逻辑)
+            Statistic statistic = statisticService.getOne(new QueryWrapper<Statistic>().eq("article_id", id));
+            if (statistic != null) {
+                statistic.setHits(statistic.getHits() + 1);
+                statisticService.updateById(statistic);
+            }
+
+            // 3. 【关键修改】构造 ArticleVO 并填充作者信息
+            ArticleVO articleVO = new ArticleVO();
+            BeanUtils.copyProperties(article, articleVO); // 复制基本属性
+
+            // 确保作者姓名被正确设置
+            articleVO.setAuthorName(article.getAuthor());
+
+            // 查询作者信息获取头像
+            if (article.getAuthor() != null) {
+                User authorUser = userService.selectByUsername(article.getAuthor());
+                if (authorUser != null) {
+                    articleVO.setAuthorAvatar(authorUser.getAvatar()); // ✅ 设置头像
+                } else {
+                    // 如果查不到用户，设置默认头像
+                    articleVO.setAuthorAvatar("/api/images/default-avatar.png");
+                }
+            } else if (article.getUserId() != null) {
+                // 如果作者姓名为空，尝试通过userId查询
+                User authorUser = userService.getById(article.getUserId());
+                if (authorUser != null) {
+                    articleVO.setAuthorName(authorUser.getUsername());
+                    articleVO.setAuthorAvatar(authorUser.getAvatar());
+                } else {
+                    articleVO.setAuthorAvatar("/api/images/default-avatar.png");
+                }
+            }
+
+            result.getMap().put("article", articleVO); // 注意：这里放入的是 VO 而不是原始 entity
+            result.setSuccess(true);
         } catch (Exception e) {
-            result.setErrorMessage("查询失败！");
             e.printStackTrace();
+            result.setErrorMessage("查询失败");
         }
         return result;
     }
@@ -357,6 +399,25 @@ public class ArticleController {
         } catch (Exception e) {
             e.printStackTrace();
             result.setErrorMessage("获取失败");
+        }
+        return result;
+    }
+
+    @PostMapping("/testUserAvatar")
+    public Result testUserAvatar(@RequestParam String username) {
+        Result result = new Result();
+        try {
+            User user = userService.selectByUsername(username);
+            if (user != null) {
+                result.getMap().put("user", user);
+                result.getMap().put("avatar", user.getAvatar());
+                result.setSuccess(true);
+            } else {
+                result.setErrorMessage("用户不存在");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.setErrorMessage("查询失败");
         }
         return result;
     }

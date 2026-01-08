@@ -18,14 +18,24 @@ const likedArticles = ref([])
 const likedComments = ref([])
 
 const getLikes = () => {
-  axios.post('/api/article/getMyLikedArticles', { userId: store.user.user.id }).then(res => {
-    likedArticles.value = res.data.map.articles
+  if (!store.user.user) return
+
+  // 1. 获取点赞的文章 (修改传参方式)
+  // 错误写法: axios.post(url, { userId: ... }) -> 发送的是 JSON Body
+  // 正确写法: 拼接 URL 或使用 params
+  axios.post('/api/article/getMyLikedArticles?userId=' + store.user.user.id).then(res => {
+    if (res.data.success) {
+      likedArticles.value = res.data.map.articles
+    }
   })
-  axios.post('/api/comment/getMyLikedComments', { userId: store.user.user.id }).then(res => {
-    likedComments.value = res.data.map.comments
+
+  // 2. 获取点赞的评论 (修改传参方式)
+  axios.post('/api/comment/getMyLikedComments?userId=' + store.user.user.id).then(res => {
+    if (res.data.success) {
+      likedComments.value = res.data.map.comments
+    }
   })
 }
-
 // 表单数据
 const userInfoForm = reactive({
   id: '',
@@ -125,6 +135,7 @@ function submitUpdate() {
 
 onMounted(() => {
   loadAllData()
+  getLikes() // <--- 别忘了调用这个方法！原代码中可能漏了调用，或者在 tab 切换时调用
 })
 
 // 工具：日期格式化 (处理 T)
@@ -185,17 +196,49 @@ const fmtDate = (str) => str ? str.replace('T', ' ') : ''
             </el-tab-pane>
 
             <el-tab-pane label="我的点赞" name="likes">
-              <el-tabs type="card">
+              <el-tabs type="border-card" class="inner-tabs">
+
                 <el-tab-pane label="赞过的文章">
-                  <div v-for="item in likedArticles" :key="item.id">
-                    <router-link :to="'/article_comment/' + item.id">{{ item.title }}</router-link>
-                  </div>
+                  <el-scrollbar max-height="500px">
+                    <div v-if="likedArticles.length > 0">
+                      <div v-for="item in likedArticles" :key="item.id" class="list-item"
+                        @click="$router.push('/article_comment/' + item.id)">
+                        <div class="item-left">
+                          <el-icon class="icon-prefix article-icon">
+                            <Document />
+                          </el-icon>
+                          <span class="item-title">{{ item.title }}</span>
+                        </div>
+                        <span class="item-date">{{ fmtDate(item.created) }}</span>
+                      </div>
+                    </div>
+                    <el-empty v-else description="暂无赞过的文章" :image-size="100" />
+                  </el-scrollbar>
                 </el-tab-pane>
+
                 <el-tab-pane label="赞过的评论">
-                  <div v-for="item in likedComments" :key="item.id">
-                    {{ item.content }} - 原文: {{ item.targetName }}
-                  </div>
+                  <el-scrollbar max-height="500px">
+                    <div v-if="likedComments.length > 0">
+                      <div v-for="item in likedComments" :key="item.id" class="list-item comment-list-item"
+                        @click="$router.push('/article_comment/' + (item.articleId || item.refId))">
+                        <div class="comment-wrapper">
+                          <div class="comment-text">
+                            <el-icon class="icon-prefix comment-icon">
+                              <ChatLineRound />
+                            </el-icon>
+                            <span>{{ item.content }}</span>
+                          </div>
+                          <div class="comment-source">
+                            原文: <span class="source-title">《{{ item.targetName || '未知文章' }}》</span>
+                          </div>
+                        </div>
+                        <span class="item-date">{{ fmtDate(item.created) }}</span>
+                      </div>
+                    </div>
+                    <el-empty v-else description="暂无赞过的评论" :image-size="100" />
+                  </el-scrollbar>
                 </el-tab-pane>
+
               </el-tabs>
             </el-tab-pane>
 
